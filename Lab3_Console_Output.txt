@@ -1,0 +1,293 @@
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+Console output used for the screenshots in the submitted PDF.
+
+Python 3.14.7, run inside the lab folder with the command shown above each block.
+Every run uses the program's own output, nothing was edited by hand.
+
+========================================================================
+$ python bfs_8puzzle.py sample_8_moves.txt
+Task 3 - the sample board from the handout. Goal reached at level 8.
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+
+Initial state:
+  1 5 2
+  7 4 3
+  8 6  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+  finished level 5: frontier now holds 39 nodes
+  finished level 6: frontier now holds 62 nodes
+
+Root Node (Level 0)
+  1 5 2
+  7 4 3
+  8 6  
+
+Level 1  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+  8   6
+
+Level 2  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+    8 6
+
+Level 3  (blank moved Up, 'W')
+  1 5 2
+    4 3
+  7 8 6
+
+Level 4  (blank moved Right, 'D')
+  1 5 2
+  4   3
+  7 8 6
+
+Level 5  (blank moved Up, 'W')
+  1   2
+  4 5 3
+  7 8 6
+
+Level 6  (blank moved Right, 'D')
+  1 2  
+  4 5 3
+  7 8 6
+
+Level 7  (blank moved Down, 'X')
+  1 2 3
+  4 5  
+  7 8 6
+
+Level 8  (blank moved Down, 'X')
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 8
+Move sequence: A A W D W D X X
+Nodes expanded: 149 | States stored in state_space: 149
+exit status: 0
+
+========================================================================
+$ python bfs_8puzzle.py already_solved.txt
+Edge case - the start board is already the goal state (0 moves).
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+
+Initial state:
+  1 2 3
+  4 5 6
+  7 8  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+
+Root Node (Level 0)
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 0
+Move sequence: (none)
+Nodes expanded: 0 | States stored in state_space: 0
+exit status: 0
+
+========================================================================
+$ python bfs_8puzzle.py unsolvable_swap.txt
+Edge case - one tile transposed, so the goal cannot be reached.
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+
+Initial state:
+  1 2 3
+  4 5 6
+  8 7  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+This puzzle is UNSOLVABLE: the goal is not reachable from the initial state.
+exit status: 0
+
+========================================================================
+$ python bfs_8puzzle.py original_slide_sample_UNSOLVABLE.txt
+Edge case - the initial board printed on the handout's state-space slide.
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+
+Initial state:
+  1 2 3
+    8 6
+  4 7 5
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+This puzzle is UNSOLVABLE: the goal is not reachable from the initial state.
+exit status: 0
+
+========================================================================
+$ python bfs_8puzzle.py invalid_duplicate.txt
+Edge case - a repeated tile (two 8s). The parser must refuse the board.
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+--- stderr ---
+Could not read input: Invalid initial state: must contain each of 0-8 exactly once, got [1, 2, 3, 4, 5, 6, 7, 8, 8]
+exit status: 1
+
+========================================================================
+$ python bfs_8puzzle.py invalid_format.txt
+Edge case - a row with only two values. The parser must refuse the file.
+========================================================================
+
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+Because every move costs 1 and the queue is FIFO, the first time the
+goal is reached is via a shortest path, so BFS is complete and optimal.
+Time: O(V + E).  Space: O(V) (visited set + queue).
+--- stderr ---
+Could not read input: Each row needs 3 comma-separated values: '1,2'
+exit status: 1
+
+========================================================================
+$ python test_edge_cases.py
+Member 3 check battery - all edge cases plus the shortest-path checks.
+========================================================================
+
+1. Boundary moves of the blank
+------------------------------
+  [PASS] blank at row 0, col 0 (index 0): 2 legal moves  (got 2)
+  [PASS] blank at row 0, col 1 (index 1): 3 legal moves  (got 3)
+  [PASS] blank at row 0, col 2 (index 2): 2 legal moves  (got 2)
+  [PASS] blank at row 1, col 0 (index 3): 3 legal moves  (got 3)
+  [PASS] blank at row 1, col 1 (index 4): 4 legal moves  (got 4)
+  [PASS] blank at row 1, col 2 (index 5): 3 legal moves  (got 3)
+  [PASS] blank at row 2, col 0 (index 6): 2 legal moves  (got 2)
+  [PASS] blank at row 2, col 1 (index 7): 3 legal moves  (got 3)
+  [PASS] blank at row 2, col 2 (index 8): 2 legal moves  (got 2)
+  [PASS] every move swaps the blank with exactly one tile  (0 bad successors)
+  [PASS] a move never produces a board outside 3x3
+  [PASS] the moved tile is orthogonally adjacent to the blank
+
+2. Sample board from the handout
+--------------------------------
+  [PASS] the sample board is reported as solvable
+  [PASS] a solution was found
+  [PASS] total number of moves is 8  (got 8)
+  [PASS] the goal node's state is the goal state
+  [PASS] every move in the sequence is legal where it is played
+  [PASS] replaying the whole sequence lands on the goal state  ((1, 2, 3, 4, 5, 6, 7, 8, 0))
+  [PASS] the number of moves equals the depth of the goal node  (8 moves)
+  [PASS] the sample board is solved without expanding everything  (149 states expanded)
+
+3. Already solved start
+-----------------------
+  [PASS] an already solved board returns a goal node
+  [PASS] it reports 0 moves  (got 0)
+  [PASS] the recorded state is the start board itself
+  [PASS] nothing is expanded when the start is already the goal  (0 expanded)
+  [PASS] the path has one node and no moves
+  [PASS] the same start is searched normally for a different goal  (14 moves)
+  [PASS] Goal State B is unreachable from Goal State A (different parity)
+  [PASS] so BFS returns no path for it
+
+4. Unsolvable boards
+--------------------
+  [PASS] the swapped pair board is rejected as unsolvable
+  [PASS] the board from the handout's slide is rejected as unsolvable
+  [PASS] the sample board is still accepted as solvable
+  [PASS] the deepest board is accepted as solvable
+This puzzle is UNSOLVABLE: the goal is not reachable from the initial state.
+  [PASS] solve() returns None for an unsolvable board
+  [PASS] solve() answers the unsolvable board immediately  (0.000 s)
+  [PASS] two different goals from the same start are not both reachable
+
+5. Invalid input files
+----------------------
+  [PASS] invalid_duplicate.txt is rejected: a repeated tile  (Invalid initial state: must contain each of 0-8 exactly once, got [1, )
+  [PASS] invalid_format.txt is rejected: a row with two values  (Each row needs 3 comma-separated values: '1,2')
+  [PASS] a missing file raises OSError
+  [PASS] validate_state rejects duplicated 8
+  [PASS] validate_state rejects only 8 tiles
+  [PASS] validate_state rejects 9 is not a tile
+  [PASS] validate_state rejects two blanks
+  [PASS] validate_state accepts both good boards
+  [PASS] sample_8_moves.txt parses to the right initial state
+  [PASS] sample_8_moves.txt parses to the right goal state
+  [PASS] the blank is read as 0, not left as a character
+
+6. Shortest path check
+----------------------
+  [PASS] sample board: BFS depth is 8  (got 8)
+  [PASS] sample board: a queue search with the goal test on pop agrees  (got 8)
+  [PASS] sample board: no solution exists in 7 moves
+  [PASS] deepest board: BFS depth is 31  (got 31)
+  [PASS] deepest board: a queue search with the goal test on pop agrees  (got 31)
+
+7. Deepest board (31 moves)
+---------------------------
+  [PASS] the deepest board is solved
+  [PASS] it takes 31 moves  (got 31)
+  [PASS] it finishes in a few seconds  (0.56 s)
+        31-move board: 181349 states expanded in 0.56 s
+  [PASS] the reachable half of the state space is 181,440 states  (181440 states)
+  [PASS] BFS stops before expanding all of them  (181349 expanded out of 181440)
+
+============================================================
+Checks run: 56   Passed: 56   Failed: 0
+============================================================
+exit status: 0
