@@ -270,11 +270,13 @@ number, which is easy for a reader to verify on the screenshot.
 
 ===============================================================================
 
-Section - checks run on the final program (test_edge_cases.py)
+Checks run on the final program (two test harnesses)
 
-The battery imports bfs_8puzzle.py and checks the cases assigned to me in the division
-of work, plus the shortest-path questions above. Final result: 56 checks, 56 passed,
-0 failed.
+Two check batteries were run on the merged code. Final result: 119 checks, 119 passed,
+0 failed. test_edge_cases.py covers the search (Task 3), test_task2_game.py covers the
+game (Task 2) and the shared rules.
+
+test_edge_cases.py - the search (56 checks)
 
   1. Boundary moves of the blank (12 checks) - blank at each of the nine cells of the
      board, with 2 moves in each corner, 3 on each edge and 4 in the centre; every
@@ -301,8 +303,35 @@ of work, plus the shortest-path questions above. Final result: 56 checks, 56 pas
      in 0.51 s, a full walk of the reachable space returns 181,440 states, and the
      search stops before expanding all of them.
 
-The file test_edge_cases.py is a test harness and is not part of the submitted
-program; it is kept in the folder so the results above can be re-run.
+test_task2_game.py - the game and the shared rules (63 checks)
+
+  1. Boundary moves in the game (14 checks) - the same nine cells, with the same counts
+     as the search; every move swaps the blank with one neighbouring tile; the board a
+     move came from is still unchanged afterwards.
+  2. validate_move (9 checks) - the legal keys are accepted, a key that would leave the
+     board is refused, and an unknown, empty, doubled, lowercase or missing key is
+     refused.
+  3. Typed input is converted to the state form (13 checks) - the lab sheet's format
+     converts to the internal state, a blank typed as 0 or '_' converts too, and a
+     repeated tile, eight or ten cells, a quoted tile, two blanks or a tile numbered 9
+     are all refused before the game starts.
+  4. Solvability (4 checks) - the lab sheet's own input-format example board cannot
+     reach the goal, the 8-move board can, and one transposed tile is enough to make a
+     board unsolvable.
+  5. Playing the game end to end (16 checks) - the game is run as a separate process
+     and the prompts are fed in line by line: the instructions print before anything is
+     asked, the eight moves solve the 8-move board and the last board printed is the
+     goal board, an invalid key is refused and the game carries on, Q ends the game,
+     an unsolvable pair is refused before play starts, an already solved start reports
+     0 moves, bad input is re-prompted, and the game ends cleanly when the input runs
+     out or Q is typed at a state prompt.
+  6. The game and the search agree (7 checks) - the search calls the game's own move
+     generator rather than a copy, both produce the same move set and the same successor
+     boards, a board typed into the game is solved by the search in 8 moves, and every
+     move in the search's answer passes the game's validator.
+
+Both files are test harnesses and are not part of the submitted program; they are kept
+in the folder so every result above can be re-run.
 
 Submitted as part of Laboratory Exercise No. 3. The program files carry the group's
 names and student numbers as the handout requires.
