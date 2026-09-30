@@ -4,12 +4,19 @@ Task 2: 8-Puzzle Game in Python
 
 State representation
 --------------------
-A state is a flat list of 9 items read left-to-right, top-to-bottom.
-Tiles are the ints 1..8 and the blank is the string ' '.
-    [1, 2, 3, 4, ' ', 8, 5, 6, 7]   ->   1 2 3
-                                          4 _ 8
-                                          5 6 7
+A state is a tuple of 9 ints read left-to-right, top-to-bottom, and the blank is 0.
+The Task 3 file uses the same form, so the game and the search hand states to each
+other without converting anything.
+    (1, 2, 3, 4, 0, 8, 5, 6, 7)   ->   1 2 3
+                                      4 _ 8
+                                      5 6 7
 Index -> (row, col):  row = i // 3, col = i % 3
+
+The player still types the format from the lab sheet, [1, 2, 3, 4, ' ', 8, 5, 6, 7].
+to_state() converts that in one place: a blank typed as ' ', '_' or 0 becomes 0.
+
+This file owns the shared move rules (MOVES, get_possible_moves, validate_move) and
+the parity check, and the Task 3 search imports them.
 
 Moves are described by the direction the EMPTY block moves:
     W = up, A = left, X = down, D = right
@@ -17,9 +24,10 @@ Moves are described by the direction the EMPTY block moves:
 
 import ast
 
-BLANK = ' '
+BLANK = 0
 SIZE = 3
-DEFAULT_GOAL = [1, 2, 3, 4, 5, 6, 7, 8, BLANK]  # Goal State A from the lab sheet
+BLANK_CHARS = (' ', '_', '')        # what the player is allowed to type for the blank
+DEFAULT_GOAL = (1, 2, 3, 4, 5, 6, 7, 8, BLANK)  # Goal State A from the lab sheet
 
 # key -> (label, row change, column change) for the empty block
 MOVES = {
@@ -32,10 +40,32 @@ MOVES = {
 
 # ---------------------------------------------------------------- validation
 def is_valid_state(state):
-    """A state is valid iff it is a list of 9 items: tiles 1-8 once each + one blank."""
-    if not isinstance(state, list) or len(state) != SIZE * SIZE:
-        return False
-    return sorted(state, key=str) == sorted(list(range(1, 9)) + [BLANK], key=str)
+    """True iff state is 9 ints: the tiles 1-8 once each plus one blank (0)."""
+    return (isinstance(state, (tuple, list)) and len(state) == SIZE * SIZE
+            and all(isinstance(t, int) and not isinstance(t, bool) for t in state)
+            and sorted(state) == list(range(SIZE * SIZE)))
+
+
+def to_state(items):
+    """Convert what the player typed into a state, or raise ValueError.
+
+    The blank may be typed as ' ' instead of 0, so this is where the typed form
+    becomes the form everything else works with.
+    """
+    if not isinstance(items, list) or len(items) != SIZE * SIZE:
+        raise ValueError("needs 9 items inside square brackets")
+    converted = []
+    for item in items:
+        if isinstance(item, str) and item.strip() in BLANK_CHARS:
+            converted.append(BLANK)
+        elif isinstance(item, int) and not isinstance(item, bool):
+            converted.append(item)
+        else:
+            raise ValueError(f"{item!r} is not a tile number or a blank")
+    state = tuple(converted)
+    if not is_valid_state(state):
+        raise ValueError("use the tiles 1-8 exactly once plus one blank")
+    return state
 
 
 def _inversions(state):
@@ -51,17 +81,21 @@ def is_solvable(initial, goal):
 
 # --------------------------------------------------------------------- moves
 def get_possible_moves(state):
-    """Return {key: new_state} for every legal move of the empty block."""
+    """Return {key: new_state} for every legal move of the empty block.
+
+    This is the project's only move generator. The Task 3 search calls this same
+    function, so the game and the search cannot disagree about the rules.
+    """
     blank = state.index(BLANK)
     row, col = divmod(blank, SIZE)
     result = {}
     for key, (_, dr, dc) in MOVES.items():
         r, c = row + dr, col + dc
         if 0 <= r < SIZE and 0 <= c < SIZE:      # stay on the board
-            new_state = state[:]
             target = r * SIZE + c
-            new_state[blank], new_state[target] = new_state[target], new_state[blank]
-            result[key] = new_state
+            tiles = list(state)
+            tiles[blank], tiles[target] = tiles[target], tiles[blank]
+            result[key] = tuple(tiles)
     return result
 
 
@@ -75,7 +109,7 @@ def print_board(state):
     print("+---+---+---+")
     for r in range(SIZE):
         row = state[r * SIZE:(r + 1) * SIZE]
-        print("| " + " | ".join(str(t) for t in row) + " |")
+        print("| " + " | ".join(" " if t == BLANK else str(t) for t in row) + " |")
         print("+---+---+---+")
 
 
@@ -98,20 +132,27 @@ def show_instructions():
 
 
 def read_state(prompt, default=None):
-    """Keep asking until the user types a valid state (or Enter for the default)."""
+    """Keep asking until the user types a valid state (or Enter for the default).
+
+    The typed list is converted with to_state() here, so everything after this
+    point works with the blank as 0. 'Q' and Ctrl-D both stop the game cleanly.
+    """
     while True:
-        text = input(prompt).strip()
-        if not text and default is not None:
-            return default[:]
         try:
-            state = ast.literal_eval(text)
-        except (ValueError, SyntaxError):
-            print("  Could not read that. Use the format [1, 2, 3, 4, ' ', 8, 5, 6, 7]")
-            continue
-        if not is_valid_state(state):
-            print("  Invalid state: use tiles 1-8 exactly once plus one ' ' (9 items).")
-            continue
-        return state
+            text = input(prompt).strip()
+        except EOFError:
+            print("\nNo input left, ending the game.")
+            raise SystemExit(0)
+        if text.upper() == 'Q':
+            print("Game ended.")
+            raise SystemExit(0)
+        if not text and default is not None:
+            return default
+        try:
+            return to_state(ast.literal_eval(text))
+        except (ValueError, SyntaxError) as error:
+            print(f"  Could not read that ({error}). Use the format "
+                  "[1, 2, 3, 4, ' ', 8, 5, 6, 7]")
 
 
 # ---------------------------------------------------------------------- game
@@ -125,7 +166,7 @@ def play():
         print("Please restart with a different pair.")
         return
 
-    state, moves = initial[:], 0
+    state, moves = initial, 0
     while state != goal:
         print(f"\nMoves so far: {moves}")
         print_board(state)
