@@ -97,7 +97,7 @@ for index, expected in EXPECTED_COUNTS.items():
 bad_swaps = []
 for index in range(9):
     state = blank_at(index)
-    for action, next_state in puzzle.get_possible_moves(state):
+    for action, next_state in puzzle.get_possible_moves(state).items():
         differing = [p for p in range(9) if state[p] != next_state[p]]
         if len(differing) != 2 or 0 not in [state[p] for p in differing]:
             bad_swaps.append((index, action, next_state))
@@ -106,7 +106,7 @@ check("every move swaps the blank with exactly one tile",
 
 check("a move never produces a board outside 3x3",
       all(len(next_state) == 9 for index in range(9)
-          for _, next_state in puzzle.get_possible_moves(blank_at(index))))
+          for _, next_state in puzzle.get_possible_moves(blank_at(index)).items()))
 
 # The tile that moved must be orthogonally next to the blank, and the tile
 # numbers themselves must be the same set as before (nothing invented).
@@ -119,7 +119,7 @@ def orthogonal_swap_ok(state, next_state):
 
 check("the moved tile is orthogonally adjacent to the blank",
       all(orthogonal_swap_ok(blank_at(i), s)
-          for i in range(9) for _, s in puzzle.get_possible_moves(blank_at(i))))
+          for i in range(9) for _, s in puzzle.get_possible_moves(blank_at(i)).items()))
 
 
 # 2. The sample board from the handout: 8 moves.
@@ -147,7 +147,7 @@ def replay(initial, node):
     """
     state = initial
     for step, path_node in enumerate(node.path()[1:], start=1):
-        legal = dict(puzzle.get_possible_moves(state))
+        legal = puzzle.get_possible_moves(state)
         if path_node.action not in legal:
             return step, state, f"'{path_node.action}' is not legal here"
         state = legal[path_node.action]
@@ -311,7 +311,7 @@ def bfs_goal_on_pop(initial, goal):
         state, depth = frontier.popleft()
         if state == goal:
             return depth
-        for _, next_state in puzzle.get_possible_moves(state):
+        for _, next_state in puzzle.get_possible_moves(state).items():
             if next_state not in seen:
                 seen.add(next_state)
                 frontier.append((next_state, depth + 1))
@@ -327,7 +327,7 @@ def depth_limited(initial, goal, limit):
             return True
         if depth == limit:
             continue
-        for _, next_state in puzzle.get_possible_moves(state):
+        for _, next_state in puzzle.get_possible_moves(state).items():
             if seen.get(next_state, 99) > depth + 1:
                 seen[next_state] = depth + 1
                 stack.append((next_state, depth + 1))
@@ -370,7 +370,7 @@ def count_reachable(initial):
     frontier = deque([initial])
     while frontier:
         state = frontier.popleft()
-        for _, next_state in puzzle.get_possible_moves(state):
+        for _, next_state in puzzle.get_possible_moves(state).items():
             if next_state not in seen:
                 seen.add(next_state)
                 frontier.append(next_state)
