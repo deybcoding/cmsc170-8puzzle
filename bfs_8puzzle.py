@@ -6,6 +6,11 @@ Task 3: Breadth-First Search on the 8-Puzzle
 from collections import deque
 import sys
 
+# The move rules and the parity check live in the Task 2 game file. The search
+# imports them instead of writing them a second time, so the game and the search
+# always agree about what a legal move is.
+from Task2_Lab3 import get_possible_moves, is_valid_state, is_solvable
+
 
 # Describing BFS
 
@@ -46,29 +51,10 @@ class Node:
 
 # Moves and state space
 
-# (row change, col change) applied to the blank
-MOVES = {"W": (-1, 0), "A": (0, -1), "X": (1, 0), "D": (0, 1)}
+# The move generator is Task 2's get_possible_moves(state), imported above. It
+# returns {action: next_state} for the blank's legal moves, so this section only
+# has to cache the states the search expands.
 STEP_COST = 1
-
-def get_possible_moves(state):
-    """
-    Return [(action, next_state), ...] for every legal move of the blank.
-    A move is valid only if the blank stays inside the 3x3 board and only
-    one tile changes place.
-    (If Member 1's get_possible_moves has a different signature, adapt
-    this one line or swap the function in.)
-    """
-    blank = state.index(0)
-    r, c = divmod(blank, 3)
-    result = []
-    for action, (dr, dc) in MOVES.items():
-        nr, nc = r + dr, c + dc
-        if 0 <= nr < 3 and 0 <= nc < 3:
-            target = nr * 3 + nc
-            new = list(state)
-            new[blank], new[target] = new[target], new[blank]
-            result.append((action, tuple(new)))
-    return result
 
 # state_space: {state: [(action, next_state, step_cost), ...]}
 # Filled while BFS runs, so it only stores states that were actually
@@ -78,14 +64,15 @@ state_space = {}
 def expand(state):
     """Return (and cache in state_space) the successors of a state."""
     if state not in state_space:
-        state_space[state] = [(a, s, STEP_COST) for a, s in get_possible_moves(state)]
+        state_space[state] = [(a, s, STEP_COST)
+                              for a, s in get_possible_moves(state).items()]
     return state_space[state]
 
 
 # File input
 
 def validate_state(state, label="state"):
-    if len(state) != 9 or sorted(state) != list(range(9)):
+    if not is_valid_state(state):
         raise ValueError(f"Invalid {label}: must contain each of 0-8 exactly once, got {list(state)}")
 
 def parse_state_file(path):
@@ -114,16 +101,9 @@ def parse_state_file(path):
 
 # Solvability check and BFS
 
-def is_solvable(initial, goal):
-    """
-    On a 3x3 board a state can reach another only if both have the same
-    inversion parity (ignoring the blank). Lets us reject impossible
-    boards instantly instead of exploring all 181,440 reachable states.
-    """
-    def inversions(s):
-        t = [x for x in s if x != 0]
-        return sum(1 for i in range(len(t)) for j in range(i + 1, len(t)) if t[i] > t[j])
-    return inversions(initial) % 2 == inversions(goal) % 2
+# is_solvable(initial, goal) is Task 2's parity check, imported above. It lets the
+# program reject an impossible board instead of exploring all 181,440 reachable
+# states before giving up.
 
 def bfs(initial_state, goal_state, verbose=True):
     """
