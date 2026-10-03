@@ -32,9 +32,11 @@ format, [1, 2, 3, 4, ' ', 8, 5, 6, 7], and to_state() converts it on the way in.
 """
 
 import ast
+import pathlib
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
+from tkinter import filedialog
 
 from collections import deque
 
@@ -190,7 +192,11 @@ def play():
         print_board(state)
         options = get_possible_moves(state)
         print("Available: " + ", ".join(f"'{k}' {MOVES[k][0]}" for k in options))
-        key = input("Your move: ").strip().upper()
+        try:
+            key = input("Your move: ").strip().upper()
+        except EOFError:
+            print("\nNo input left, ending the game.")
+            return
         if key == 'Q':
             print("Game ended.")
             return
@@ -422,6 +428,9 @@ TILE_GAP = 10
 BOARD_PAD = 14
 
 
+HERE = pathlib.Path(__file__).resolve().parent
+
+
 def to_game(board):
     """Search board -> whatever the game file's functions expect."""
     if GAME_BLANK == 0:
@@ -509,22 +518,30 @@ def rounded_box(canvas, x1, y1, x2, y2, radius, **options):
 
 
 class PuzzleGUI:
-    """The window. The play/solve state lives here so the checks can drive it."""
+    """The window. The play/solve state lives here so the checks can drive it.
 
-    def __init__(self, root):
+    Two modes, one window: in "game" mode the optimal-solution button stays off until
+    the player solves the puzzle, and in "bfs" mode the search is the point of the
+    window, so the button is ready straight away.
+    """
+
+    def __init__(self, root, mode="game"):
         self.root = root
+        self.mode = mode
         self.initial = DEFAULT_INITIAL
         self.goal = DEFAULT_GOAL
         self.board = DEFAULT_INITIAL
         self.player_moves = []
         self.optimal = None             # the BFS answer for this start
         self.optimal_moves = []
+        self.optimal_expanded = None
         self.replay_index = 0
         self.replay_boards = []         # the boards the animation has shown
         self.replay_job = None
         self.solved = False
 
-        root.title("8-Puzzle - play it, then watch BFS solve it")
+        root.title("8-Puzzle - play it, then watch BFS solve it" if mode == "game"
+                   else "8-Puzzle - breadth-first search")
         root.configure(bg=BG)
         root.resizable(False, False)
         self.ui_font = pick_font(UI_FONT_CHOICES)
@@ -563,10 +580,12 @@ class PuzzleGUI:
         self._entry(inputs, self.goal_var).grid(row=1, column=1, sticky="w", padx=(8, 14))
         # The button goes under the two boxes: next to them the row is wider than the
         # window and the label gets cut off.
+        self.load_button = self._button(inputs, "Load from file", self.load_from_file,
+                                        kind="ghost")
+        self.load_button.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
         self.new_game_button = self._button(inputs, "New game", self.read_entries_and_start,
                                             kind="primary")
-        self.new_game_button.grid(row=2, column=0, columnspan=2, sticky="e", padx=(0, 14),
-                                  pady=(12, 14))
+        self.new_game_button.grid(row=2, column=1, sticky="e", padx=(0, 14), pady=(12, 14))
 
         # the board
         side = SIZE * TILE_SIZE + (SIZE - 1) * TILE_GAP + 2 * BOARD_PAD
@@ -668,6 +687,7 @@ class PuzzleGUI:
         self.player_moves = []
         self.optimal = None
         self.optimal_moves = []
+        self.optimal_expanded = None
         self.replay_index = 0
         self.replay_boards = []
         self.solved = self.board == self.goal
@@ -691,6 +711,12 @@ class PuzzleGUI:
         self.refresh_board()
         if not rules_agree(self.board):
             self.write_log("warning: the game and the search do not list the same moves here")
+        if self.mode == "bfs" and self.in_play:
+            # In this mode the search is the point of the window, so the answer is
+            # offered straight away instead of after the player solves the puzzle.
+            self._enable(self.solve_button, True)
+            self.set_status("BFS mode - press 'Show the optimal solution (BFS)' to watch the "
+                            "search from this board.", INK)
         return self.in_play
 
     def read_entries_and_start(self):
@@ -705,6 +731,30 @@ class PuzzleGUI:
             self.set_status("The two boards are the same, so there is nothing to solve.", BAD)
             return False
         return self.new_game(initial, goal)
+
+    def load_from_file(self, path=None):
+        """Read the two boards from an input file, the Task 3 format.
+
+        The checks call this with a path; the button asks for the file first.
+        """
+        if path is None:
+            path = filedialog.askopenfilename(title="Open a board file",
+                                              initialdir=str(HERE),
+                                              filetypes=[("Board files", "*.txt"),
+                                                         ("All files", "*")])
+            if not path:
+                return False
+        try:
+            initial, goal = parse_state_file(path)
+        except (OSError, ValueError) as error:
+            self.set_status(f"Cannot read that file: {error}", BAD)
+            self.write_log(f"file refused   {error}")
+            return False
+        self.write_log(f"file loaded    {pathlib.Path(path).name}")
+        started = self.new_game(initial, goal)
+        # new_game() clears the log, so the file line is written after it.
+        self.write_log(f"loaded from    {pathlib.Path(path).name}")
+        return started
 
     def click_tile(self, index):
         """Slide the clicked tile, if it is next to the blank."""
@@ -801,12 +851,16 @@ class PuzzleGUI:
     def show_optimal(self):
         """Play BFS's answer from the initial board, one move at a time."""
         if self.optimal is None:
-            node, _ = bfs(self.initial, self.goal, verbose=False)
+            node, expanded = bfs(self.initial, self.goal, verbose=False)
             if node is None:
                 self.set_status("BFS found no route for this pair.", BAD)
                 return False
             self.optimal = node
             self.optimal_moves = [step.action for step in node.path()[1:]]
+            self.optimal_expanded = expanded
+            self.write_log(f"BFS answer     {len(self.optimal_moves)} move(s), "
+                           f"{expanded} states expanded")
+            self.write_log(f"BFS sequence   {' '.join(self.optimal_moves) or '(none)'}")
         self.replay_index = 0
         self.replay_boards = []
         self.board = self.initial
@@ -893,50 +947,83 @@ class PuzzleGUI:
         self.log.config(state="disabled")
 
 
-def main():
+def main(mode="game"):
+    """Open the window in "game" or "bfs" mode."""
     try:
         root = tk.Tk()
     except tk.TclError as error:
         sys.exit(f"No window available ({error}). Run this from a desktop session.")
-    PuzzleGUI(root)
+    if mode == "bfs":
+        describe_bfs()          # this mode is about the search, so it explains itself
+    PuzzleGUI(root, mode=mode)
     root.mainloop()
 # ==============================================================================
 # PART 4 - the menu
 # ==============================================================================
 
-def main_menu():
-    """The entry point: play the game, run the search on a file, or open the GUI."""
-    describe_bfs()
-    print("DS 170 / CMSC 170 - Laboratory Exercise No. 3")
-    print("  1 - play the 8-puzzle game (Task 2)")
-    print("  2 - solve a board from a file with BFS (Task 3)")
-    print("  3 - open the GUI: play it first, then watch BFS solve it")
+def ask(question, options):
+    """Ask a question with a fixed set of answers and return the key chosen."""
+    print(question)
+    for key, text in options:
+        print(f"  {key} - {text}")
     print("  Q - quit")
-    for attempt in range(3):
-        choice = input("\nChoice: ").strip().upper()
+    for _ in range(3):
+        try:
+            choice = input("\nChoice: ").strip().upper()
+        except EOFError:                      # Ctrl-D at a menu prompt
+            print("\nNo input left.")
+            return None
         if choice == 'Q':
-            print("Goodbye.")
-            return
-        if choice == '1':
-            play()
-            return
-        if choice == '2':
-            path = input("Path to input file (e.g. sample_8_moves.txt): ").strip()
-            try:
-                initial_state, goal_state = parse_state_file(path)
-            except (OSError, ValueError) as error:
-                print(f"Could not read input: {error}")
-                return
-            print("Initial state:\n" + board_str(initial_state))
-            print("Goal state:\n" + board_str(goal_state))
-            print("\nSearching...")
-            solve(initial_state, goal_state)
-            return
-        if choice == '3':
-            main()
-            return
-        print("Type 1, 2, 3 or Q.")
+            return None
+        if choice in dict(options):
+            return choice
+        print("Type " + ", ".join(key for key, _ in options) + " or Q.")
     print("No valid choice, stopping.")
+    return None
+
+
+def run_bfs_from_file():
+    """The Task 3 CLI path: read the two boards from a file and search them."""
+    describe_bfs()
+    path = input("Path to input file (e.g. sample_8_moves.txt): ").strip()
+    try:
+        initial_state, goal_state = parse_state_file(path)
+    except (OSError, ValueError) as error:
+        print(f"Could not read input: {error}")
+        return
+    print("Initial state:\n" + board_str(initial_state))
+    print("Goal state:\n" + board_str(goal_state))
+    print("\nSearching...")
+    solve(initial_state, goal_state)
+
+
+def main_menu():
+    """The entry point: GUI or CLI first, then the game or the search."""
+    print("DS 170 / CMSC 170 - Laboratory Exercise No. 3")
+    print("8-puzzle and breadth-first search\n")
+
+    mode = ask("How do you want to run the program?",
+               [("1", "with a GUI (a window)"),
+                ("2", "CLI only, in this terminal")])
+    if mode is None:
+        print("Goodbye.")
+        return
+
+    # Both tasks are offered in both ways of running the program.
+    task = ask("What do you want to do?",
+               [("1", "play the 8-puzzle game (Task 2)"),
+                ("2", "solve a board with BFS (Task 3)")])
+    if task is None:
+        print("Goodbye.")
+        return
+
+    if mode == '1':
+        # One window, two modes: play it yourself, or drive the search.
+        main("game" if task == '1' else "bfs")
+    elif task == '1':
+        play()
+    else:
+        run_bfs_from_file()
 
 
 if __name__ == "__main__":
