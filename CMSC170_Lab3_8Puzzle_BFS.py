@@ -24,11 +24,10 @@ Run it from the folder that holds the input files:
 The menu takes a choice; the GUI needs a desktop session. The three parts are also
 importable, so the check batteries can drive them directly.
 
-The parts were written by different members and joined here. Part 2 used to keep its
-own copy of the move rules; it now calls Part 1's, so the game and the search can
-never disagree about what a legal move is. The board is a tuple of nine ints with 0
-for the blank everywhere inside the program; the player still types the lab sheet's
-format, [1, 2, 3, 4, ' ', 8, 5, 6, 7], and to_state() converts it on the way in.
+Task Distribution:
+    Senoy - Task 1 and 2
+    Royo - Task 3
+    Jomuad - Task 4 and Integration of Senoy and Royo's parts
 """
 
 import ast
@@ -59,7 +58,7 @@ MOVES = {
 }
 
 
-# ---------------------------------------------------------------- validation
+# validation
 def is_valid_state(state):
     """True iff state is 9 ints: the tiles 1-8 once each plus one blank (0)."""
     return (isinstance(state, (tuple, list)) and len(state) == SIZE * SIZE
@@ -118,7 +117,7 @@ def random_state(goal=DEFAULT_GOAL, steps=60):
     return state if state != goal else random_state(goal, steps + 10)
 
 
-# --------------------------------------------------------------------- moves
+# moves
 def get_possible_moves(state):
     """Return {key: new_state} for every legal move of the empty block.
 
@@ -143,7 +142,7 @@ def validate_move(state, key):
     return key in MOVES and key in get_possible_moves(state)
 
 
-# ------------------------------------------------------------------- display
+# display
 def print_board(state):
     print("+---+---+---+")
     for r in range(SIZE):
@@ -235,7 +234,7 @@ def read_state(prompt, default=None, random_from=None):
                   "[1, 2, 3, 4, ' ', 8, 5, 6, 7]")
 
 
-# ---------------------------------------------------------------------- game
+# game
 def play(initial=None, goal=None, instructions=True):
     """The game. Returns (how it ended, initial, goal, moves played, final board).
 
