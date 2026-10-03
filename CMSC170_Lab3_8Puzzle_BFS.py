@@ -3,8 +3,8 @@ DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-Puzzle Problem and Breadth-First Search in Python
 
 Group I
-    Senoy, Kyle Howard          <student number>
-    Royo, Dave Christian        <student number>
+    Senoy, Kyle Howard          2023-06686
+    Royo, Dave Christian        2022-10799
     Jomuad, Precious Mae E.     2023-00554
 
 This is the group's single program for the lab. It has four parts:
