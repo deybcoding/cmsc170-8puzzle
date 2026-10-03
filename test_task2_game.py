@@ -157,7 +157,7 @@ MOVES_TO_SOLVE = "A\nA\nW\nD\nW\nD\nX\nX\n"
 status, out, err = play("[1,5,2,7,4,3,8,6,' ']\n\n" + MOVES_TO_SOLVE, "solve the 8-move board")
 check("the program explains the problem and the rules before asking for input",
       "8-Puzzle Game Start" in out and "Rules:" in out
-      and out.index("Rules:") < out.index("Initial state:"))
+      and out.index("Rules:") < out.index("Initial state"))
 check("the instructions show the lab sheet's input format",
       "[1, 2, 3, 4, ' ', 8, 5, 6, 7]" in out)
 check("the key legend is printed", "'W' Move Up" in out and "'D' Move Right" in out)
@@ -230,6 +230,69 @@ if goal_node is not None:
     check("a state from the search path is a valid game state", game.is_valid_state(some_state))
     check("the game offers moves for a state the search produced",
           len(game.get_possible_moves(some_state)) >= 2)
+
+
+# 7. The random board, and what the game reports when it ends.
+
+section("7. Random board and the game's ending")
+
+check("a random board is a valid state", game.is_valid_state(game.random_state()))
+check("a random board can reach the default goal",
+      game.is_solvable(game.random_state(), game.DEFAULT_GOAL))
+check("a random board is not the goal board",
+      all(game.random_state() != game.DEFAULT_GOAL for _ in range(10)))
+check("two random boards are not always the same",
+      len({game.random_state() for _ in range(10)}) > 1)
+
+import builtins
+
+def play_with(answer_lines, *boards):
+    """Run play() with these lines typed at its prompts.
+
+    Anything in `boards` is passed to play() as (initial, goal), the way the file
+    option does it.
+    """
+    lines = iter(answer_lines)
+    original = builtins.input
+    builtins.input = lambda prompt="": next(lines)
+    try:
+        return game.play(*boards)
+    finally:
+        builtins.input = original
+
+random_run = play_with(["R", "", "Q"])
+check("'R' at the first prompt plays a random board",
+      random_run[0] == "quit" and game.is_solvable(random_run[1], game.DEFAULT_GOAL),
+      f"{random_run[0]}, board {random_run[1]}")
+check("the game reports the outcome, the boards and the moves played",
+      random_run[1] == random_run[4] and random_run[3] == 0)
+
+solved_run = play_with(["[1,5,2,7,4,3,8,6,' ']", ""] + MOVES_TO_SOLVE.split())
+check("a solved game reports 'solved' with the number of moves",
+      solved_run[0] == "solved" and solved_run[3] == 8, f"{solved_run[0]}, {solved_run[3]} moves")
+check("the reported boards are the ones played from and to",
+      solved_run[1] == (1, 5, 2, 7, 4, 3, 8, 6, 0) and solved_run[4] == game.DEFAULT_GOAL)
+
+quit_run = play_with(["[1,5,2,7,4,3,8,6,' ']", "", "A", "Q"])
+check("quitting reports 'quit' and the board the player stopped on",
+      quit_run[0] == "quit" and quit_run[3] == 1 and quit_run[4] != quit_run[1])
+
+unsolvable_run = play_with(["[1,2,3,4,5,6,8,7,' ']", "[1,2,3,4,5,6,7,8,' ']"])
+check("an impossible pair reports 'unsolvable'",
+      unsolvable_run[0] == "unsolvable", unsolvable_run[0])
+
+file_run = play_with(["Q"], (1, 5, 2, 7, 4, 3, 8, 6, 0), game.DEFAULT_GOAL)
+check("boards handed in from a file skip the two prompts",
+      file_run[0] == "quit" and file_run[1] == (1, 5, 2, 7, 4, 3, 8, 6, 0)
+      and file_run[2] == game.DEFAULT_GOAL)
+
+import subprocess
+instructions = subprocess.run([sys.executable, "-c",
+    "import Task2_Lab3 as m; m.show_instructions()"], cwd=REPO,
+    capture_output=True, text=True).stdout
+check("the instructions say what 'R' does", "'R' at the first prompt" in instructions)
+check("the instructions say that quitting leads to BFS",
+      "watch BFS solve the board" in instructions)
 
 
 # Summary.
