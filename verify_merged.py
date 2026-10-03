@@ -157,11 +157,23 @@ try:
 except OSError:
     check("a missing file raises OSError", True)
 
-solved = subprocess.run([sys.executable, SUBMISSION.name], cwd=REPO,
-                        input="Q\n", capture_output=True, text=True, timeout=60)
-check("running the file starts the menu and quits cleanly on Q",
-      solved.returncode == 0 and "Task 2" in solved.stdout and "Task 3" in solved.stdout,
+def run_menu(script_input, timeout=90):
+    """Run the submission file with scripted answers to the menu."""
+    return subprocess.run([sys.executable, SUBMISSION.name], cwd=REPO, input=script_input,
+                          capture_output=True, text=True, timeout=timeout)
+
+solved = run_menu("Q\n")
+check("running the file asks how to run it and quits cleanly on Q",
+      solved.returncode == 0 and "How do you want to run the program?" in solved.stdout
+      and "with a GUI" in solved.stdout and "CLI only" in solved.stdout,
       f"exit {solved.returncode}")
+after_choice = run_menu("2\nQ\n")
+check("both tasks are offered once the way of running it is chosen",
+      "play the 8-puzzle game (Task 2)" in after_choice.stdout
+      and "solve a board with BFS (Task 3)" in after_choice.stdout,
+      f"exit {after_choice.returncode}")
+check("the menu ends cleanly when the input runs out",
+      run_menu("1\n").returncode == 0 and "No input left" in run_menu("1\n").stdout)
 
 
 # 4. The game.
@@ -173,16 +185,27 @@ check("the instructions print before anything is asked for",
           "import CMSC170_Lab3_8Puzzle_BFS as m; m.show_instructions()"], cwd=REPO,
           capture_output=True, text=True).stdout)
 
-played = subprocess.run([sys.executable, SUBMISSION.name], cwd=REPO,
-                        input="1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION),
-                        capture_output=True, text=True, timeout=60)
+played = run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION))
 last_line = played.stdout.strip().splitlines()[-1] if played.stdout.strip() else "(no output)"
-check("the menu starts the game and it plays through to the solved board",
+check("CLI + the game plays through to the solved board",
       "Solved in 8 moves!" in played.stdout, last_line)
-check("the game refuses an unsolvable pair",
-      "parity mismatch" in subprocess.run([sys.executable, SUBMISSION.name], cwd=REPO,
-          input="1\n[1,2,3,4,5,6,8,7,' ']\n[1,2,3,4,5,6,7,8,' ']\n", capture_output=True,
-          text=True, timeout=60).stdout)
+check("the CLI game refuses an unsolvable pair",
+      "parity mismatch" in run_menu("2\n1\n[1,2,3,4,5,6,8,7,' ']\n[1,2,3,4,5,6,7,8,' ']\n").stdout)
+check("the CLI game ends cleanly when the input runs out",
+      "No input left" in run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\nA\n").stdout)
+
+# Task 3 in the CLI: the file option, straight from the menu.
+bfs_run = run_menu("2\n2\nsample_8_moves.txt\n")
+check("CLI + BFS reads the file and finds the handout's 8 moves",
+      "Total number of moves to reach the goal state = 8" in bfs_run.stdout
+      and "Nodes expanded: 149" in bfs_run.stdout)
+check("the BFS path explains the algorithm before searching",
+      "=== Breadth-First Search (BFS) ===" in bfs_run.stdout
+      and bfs_run.stdout.index("Breadth-First Search (BFS)") < bfs_run.stdout.index("Searching..."))
+check("CLI + BFS reports an unsolvable file",
+      "UNSOLVABLE" in run_menu("2\n2\nunsolvable_swap.txt\n").stdout)
+check("CLI + BFS refuses a bad file with a message",
+      "Could not read input" in run_menu("2\n2\ninvalid_duplicate.txt\n").stdout)
 
 
 # 5. The GUI, on top of both parts.
@@ -221,6 +244,26 @@ check("the replay ends on the goal", app.board == GOAL)
 app.new_game(UNSOLVABLE, GOAL)
 check("the window refuses an impossible board", app.in_play is False)
 root.destroy()
+
+# the window in BFS mode, and the GUI's version of the Task 3 file option
+bfs_root = tk.Tk()
+bfs_root.withdraw()
+bfs_app = lab.PuzzleGUI(bfs_root, mode="bfs")
+check("the window opens in BFS mode with the button ready",
+      bfs_app.mode == "bfs" and str(bfs_app.solve_button["state"]) == "normal")
+check("BFS mode says what to press", "BFS mode" in bfs_app.status["text"])
+check("the answer can be asked for without solving the puzzle", bfs_app.show_optimal())
+check("BFS mode records the working out",
+      bfs_app.optimal_expanded == 149 and bfs_app.optimal_moves == SOLUTION,
+      f"{bfs_app.optimal_expanded} states expanded")
+bfs_app.stop_replay()
+check("a board file can be loaded in the window",
+      bfs_app.load_from_file(str(REPO / "sample_8_moves.txt")))
+check("the loaded boards are the file's boards",
+      bfs_app.initial == SAMPLE and bfs_app.goal == GOAL)
+check("a bad file is refused in the window",
+      bfs_app.load_from_file(str(REPO / "invalid_format.txt")) is False)
+bfs_root.destroy()
 
 # Summary.
 
