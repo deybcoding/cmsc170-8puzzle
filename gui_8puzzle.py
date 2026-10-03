@@ -37,9 +37,11 @@ changes.
 """
 
 import ast
+import pathlib
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
+from tkinter import filedialog
 
 import Task2_Lab3 as game
 import bfs_8puzzle as search
@@ -90,6 +92,9 @@ BAD = "#b42318"
 TILE_SIZE = 104
 TILE_GAP = 10
 BOARD_PAD = 14
+
+
+HERE = pathlib.Path(__file__).resolve().parent
 
 
 def to_game(board):
@@ -179,22 +184,30 @@ def rounded_box(canvas, x1, y1, x2, y2, radius, **options):
 
 
 class PuzzleGUI:
-    """The window. The play/solve state lives here so the checks can drive it."""
+    """The window. The play/solve state lives here so the checks can drive it.
 
-    def __init__(self, root):
+    Two modes, one window: in "game" mode the optimal-solution button stays off until
+    the player solves the puzzle, and in "bfs" mode the search is the point of the
+    window, so the button is ready straight away.
+    """
+
+    def __init__(self, root, mode="game"):
         self.root = root
+        self.mode = mode
         self.initial = DEFAULT_INITIAL
         self.goal = DEFAULT_GOAL
         self.board = DEFAULT_INITIAL
         self.player_moves = []
         self.optimal = None             # the BFS answer for this start
         self.optimal_moves = []
+        self.optimal_expanded = None
         self.replay_index = 0
         self.replay_boards = []         # the boards the animation has shown
         self.replay_job = None
         self.solved = False
 
-        root.title("8-Puzzle - play it, then watch BFS solve it")
+        root.title("8-Puzzle - play it, then watch BFS solve it" if mode == "game"
+                   else "8-Puzzle - breadth-first search")
         root.configure(bg=BG)
         root.resizable(False, False)
         self.ui_font = pick_font(UI_FONT_CHOICES)
@@ -214,8 +227,10 @@ class PuzzleGUI:
         head = tk.Frame(self.root, bg=BG)
         head.pack(fill="x", padx=26, pady=(16, 0))
         tk.Label(head, text="8-Puzzle", font=(self.ui_font, 24, "bold"), bg=BG, fg=INK).pack(anchor="w")
-        tk.Label(head, text="Play it yourself, then watch breadth-first search solve it",
-                 font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
+        subtitle = ("Play it yourself, then watch breadth-first search solve it"
+                    if self.mode == "game" else
+                    "Breadth-first search on the 8-puzzle: set a board, then watch it solved")
+        tk.Label(head, text=subtitle, font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
         tk.Label(head, justify="left", font=(self.ui_font, 10), bg=BG, fg=MUTED, wraplength=500,
                  text=("Tiles 1-8 and one empty space. Click a tile next to the space, or move "
                        "the space with W (up), A (left), X (down), D (right) or the arrow keys.")).pack(
@@ -233,10 +248,12 @@ class PuzzleGUI:
         self._entry(inputs, self.goal_var).grid(row=1, column=1, sticky="w", padx=(8, 14))
         # The button goes under the two boxes: next to them the row is wider than the
         # window and the label gets cut off.
+        self.load_button = self._button(inputs, "Load from file", self.load_from_file,
+                                        kind="ghost")
+        self.load_button.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
         self.new_game_button = self._button(inputs, "New game", self.read_entries_and_start,
                                             kind="primary")
-        self.new_game_button.grid(row=2, column=0, columnspan=2, sticky="e", padx=(0, 14),
-                                  pady=(12, 14))
+        self.new_game_button.grid(row=2, column=1, sticky="e", padx=(0, 14), pady=(12, 14))
 
         # the board
         side = SIZE * TILE_SIZE + (SIZE - 1) * TILE_GAP + 2 * BOARD_PAD
@@ -280,7 +297,8 @@ class PuzzleGUI:
         self.stop_button = self._button(row, "Stop", self.stop_replay, kind="ghost", state="disabled")
         self.stop_button.pack(side="left", padx=8)
         self.give_up_button = self._button(row, "Give up", self.give_up, kind="ghost")
-        self.give_up_button.pack(side="left")
+        if self.mode == "game":
+            self.give_up_button.pack(side="left")
 
         # play log
         log_card = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
@@ -338,6 +356,7 @@ class PuzzleGUI:
         self.player_moves = []
         self.optimal = None
         self.optimal_moves = []
+        self.optimal_expanded = None
         self.replay_index = 0
         self.replay_boards = []
         self.solved = self.board == self.goal
@@ -361,6 +380,12 @@ class PuzzleGUI:
         self.refresh_board()
         if not rules_agree(self.board):
             self.write_log("warning: the game and the search do not list the same moves here")
+        if self.mode == "bfs" and self.in_play:
+            # In this mode the search is the point of the window, so the answer is
+            # offered straight away instead of after the player solves the puzzle.
+            self._enable(self.solve_button, True)
+            self.set_status("BFS mode - press 'Show the optimal solution (BFS)' to watch the "
+                            "search from this board.", INK)
         return self.in_play
 
     def read_entries_and_start(self):
@@ -375,6 +400,30 @@ class PuzzleGUI:
             self.set_status("The two boards are the same, so there is nothing to solve.", BAD)
             return False
         return self.new_game(initial, goal)
+
+    def load_from_file(self, path=None):
+        """Read the two boards from an input file, the Task 3 format.
+
+        The checks call this with a path; the button asks for the file first.
+        """
+        if path is None:
+            path = filedialog.askopenfilename(title="Open a board file",
+                                              initialdir=str(HERE),
+                                              filetypes=[("Board files", "*.txt"),
+                                                         ("All files", "*")])
+            if not path:
+                return False
+        try:
+            initial, goal = search.parse_state_file(path)
+        except (OSError, ValueError) as error:
+            self.set_status(f"Cannot read that file: {error}", BAD)
+            self.write_log(f"file refused   {error}")
+            return False
+        self.write_log(f"file loaded    {pathlib.Path(path).name}")
+        started = self.new_game(initial, goal)
+        # new_game() clears the log, so the file line is written after it.
+        self.write_log(f"loaded from    {pathlib.Path(path).name}")
+        return started
 
     def click_tile(self, index):
         """Slide the clicked tile, if it is next to the blank."""
@@ -471,12 +520,16 @@ class PuzzleGUI:
     def show_optimal(self):
         """Play BFS's answer from the initial board, one move at a time."""
         if self.optimal is None:
-            node, _ = search.bfs(self.initial, self.goal, verbose=False)
+            node, expanded = search.bfs(self.initial, self.goal, verbose=False)
             if node is None:
                 self.set_status("BFS found no route for this pair.", BAD)
                 return False
             self.optimal = node
             self.optimal_moves = [step.action for step in node.path()[1:]]
+            self.optimal_expanded = expanded
+            self.write_log(f"BFS answer     {len(self.optimal_moves)} move(s), "
+                           f"{expanded} states expanded")
+            self.write_log(f"BFS sequence   {' '.join(self.optimal_moves) or '(none)'}")
         self.replay_index = 0
         self.replay_boards = []
         self.board = self.initial
@@ -563,12 +616,15 @@ class PuzzleGUI:
         self.log.config(state="disabled")
 
 
-def main():
+def main(mode="game"):
+    """Open the window in "game" or "bfs" mode."""
     try:
         root = tk.Tk()
     except tk.TclError as error:
         sys.exit(f"No window available ({error}). Run this from a desktop session.")
-    PuzzleGUI(root)
+    if mode == "bfs":
+        search.describe_bfs()          # this mode is about the search, so it explains itself
+    PuzzleGUI(root, mode=mode)
     root.mainloop()
 
 
