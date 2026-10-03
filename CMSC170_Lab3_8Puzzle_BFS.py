@@ -33,6 +33,7 @@ format, [1, 2, 3, 4, ' ', 8, 5, 6, 7], and to_state() converts it on the way in.
 
 import ast
 import pathlib
+import random
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
@@ -99,6 +100,24 @@ def is_solvable(initial, goal):
     return _inversions(initial) % 2 == _inversions(goal) % 2
 
 
+def random_state(goal=DEFAULT_GOAL, steps=60):
+    """A random board that can reach the goal.
+
+    It is made by playing random legal moves from the goal, so the board it returns is
+    always solvable to that goal, and no move undoes the one before it so the board
+    does not wander back to the goal.
+    """
+    undo = {'W': 'X', 'X': 'W', 'A': 'D', 'D': 'A'}
+    state, previous = goal, None
+    for _ in range(steps):
+        options = get_possible_moves(state)
+        choices = [key for key in options if key != previous] or list(options)
+        key = random.choice(choices)
+        state = options[key]
+        previous = undo[key]
+    return state if state != goal else random_state(goal, steps + 10)
+
+
 # --------------------------------------------------------------------- moves
 def get_possible_moves(state):
     """Return {key: new_state} for every legal move of the empty block.
@@ -148,14 +167,18 @@ def show_instructions():
     print("   block:")
     print("     'W' Move Up       'A' Move Left")
     print("     'X' Move Down     'D' Move Right")
-    print("   ('Q' quits the game)\n")
+    print("   ('R' at the first prompt gives a random board that can")
+    print("    reach the default goal)")
+    print("   ('Q' quits, and you can then watch BFS solve the board")
+    print("    you are on)\n")
 
 
-def read_state(prompt, default=None):
+def read_state(prompt, default=None, random_from=None):
     """Keep asking until the user types a valid state (or Enter for the default).
 
     The typed list is converted with to_state() here, so everything after this
-    point works with the blank as 0. 'Q' and Ctrl-D both stop the game cleanly.
+    point works with the blank as 0. 'R' asks for a random board when random_from
+    is given, and 'Q' and Ctrl-D both stop the game cleanly.
     """
     while True:
         try:
@@ -166,6 +189,10 @@ def read_state(prompt, default=None):
         if text.upper() == 'Q':
             print("Game ended.")
             raise SystemExit(0)
+        if text.upper() == 'R' and random_from is not None:
+            board = random_state(random_from)
+            print("  random board: " + str(board))
+            return board
         if not text and default is not None:
             return default
         try:
@@ -176,15 +203,28 @@ def read_state(prompt, default=None):
 
 
 # ---------------------------------------------------------------------- game
-def play():
+def play(initial=None, goal=None):
+    """The game. Returns (how it ended, initial, goal, moves played, final board).
+
+    `initial` and `goal` are used when the boards were already read from a file.
+    """
     show_instructions()
-    initial = read_state("Initial state: ")
-    goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
+    if initial is None:
+        initial = read_state("Initial state ('R' for a random board): ",
+                             random_from=DEFAULT_GOAL)
+    else:
+        print("Initial state:")
+        print_board(initial)
+    if goal is None:
+        goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
+    else:
+        print("Goal state:")
+        print_board(goal)
 
     if not is_solvable(initial, goal):
         print("\nThis initial state can never reach that goal (parity mismatch).")
         print("Please restart with a different pair.")
-        return
+        return ("unsolvable", initial, goal, 0, initial)
 
     state, moves = initial, 0
     while state != goal:
@@ -196,10 +236,10 @@ def play():
             key = input("Your move: ").strip().upper()
         except EOFError:
             print("\nNo input left, ending the game.")
-            return
+            return ("no_input", initial, goal, moves, state)
         if key == 'Q':
             print("Game ended.")
-            return
+            return ("quit", initial, goal, moves, state)
         if not validate_move(state, key):
             print("  Invalid move! The empty block can't go there (or unknown key).")
             continue
@@ -209,6 +249,7 @@ def play():
     print()
     print_board(state)
     print(f"Solved in {moves} moves!")
+    return ("solved", initial, goal, moves, state)
 
 # ==============================================================================
 # PART 2 - Task 3: breadth-first search
@@ -561,12 +602,20 @@ class PuzzleGUI:
         head = tk.Frame(self.root, bg=BG)
         head.pack(fill="x", padx=26, pady=(16, 0))
         tk.Label(head, text="8-Puzzle", font=(self.ui_font, 24, "bold"), bg=BG, fg=INK).pack(anchor="w")
-        tk.Label(head, text="Play it yourself, then watch breadth-first search solve it",
-                 font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
+        subtitle = ("Play it yourself, then watch breadth-first search solve it"
+                    if self.mode == "game" else
+                    "Breadth-first search on the 8-puzzle: set a board, then watch it solved")
+        tk.Label(head, text=subtitle, font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
+        if self.mode == "game":
+            rules = ("Tiles 1-8 and one empty space. Click a tile next to the space, or move the space "
+                     "with W (up), A (left), X (down), D (right) or the arrow keys. Solve the puzzle, "
+                     "or press 'Give up' to see BFS solve it for you.")
+        else:
+            rules = ("Set the two boards - type them, press 'Random board', or press 'Load from file' "
+                     "for the Task 3 file format - then press 'Show the optimal solution (BFS)' to "
+                     "watch the search work.")
         tk.Label(head, justify="left", font=(self.ui_font, 10), bg=BG, fg=MUTED, wraplength=500,
-                 text=("Tiles 1-8 and one empty space. Click a tile next to the space, or move "
-                       "the space with W (up), A (left), X (down), D (right) or the arrow keys.")).pack(
-            anchor="w", pady=(8, 0))
+                 text=rules).pack(anchor="w", pady=(8, 0))
 
         inputs = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
         inputs.pack(fill="x", padx=26, pady=(14, 0))
@@ -580,9 +629,12 @@ class PuzzleGUI:
         self._entry(inputs, self.goal_var).grid(row=1, column=1, sticky="w", padx=(8, 14))
         # The button goes under the two boxes: next to them the row is wider than the
         # window and the label gets cut off.
-        self.load_button = self._button(inputs, "Load from file", self.load_from_file,
-                                        kind="ghost")
-        self.load_button.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
+        tools = tk.Frame(inputs, bg=CARD)
+        tools.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
+        self.random_button = self._button(tools, "Random board", self.random_board, kind="ghost")
+        self.random_button.pack(side="left")
+        self.load_button = self._button(tools, "Load from file", self.load_from_file, kind="ghost")
+        self.load_button.pack(side="left", padx=8)
         self.new_game_button = self._button(inputs, "New game", self.read_entries_and_start,
                                             kind="primary")
         self.new_game_button.grid(row=2, column=1, sticky="e", padx=(0, 14), pady=(12, 14))
@@ -623,13 +675,18 @@ class PuzzleGUI:
         # buttons
         row = tk.Frame(self.root, bg=BG)
         row.pack(fill="x", padx=26, pady=(12, 0))
+        # In game mode the first thing on offer is getting unstuck: "Give up" works
+        # straight away and unlocks the animation, instead of a greyed-out button the
+        # player cannot use yet.
+        self.give_up_button = self._button(row, "Give up - show the answer", self.give_up,
+                                           kind="ghost")
+        if self.mode == "game":
+            self.give_up_button.pack(side="left", padx=(0, 8))
         self.solve_button = self._button(row, "Show the optimal solution (BFS)", self.show_optimal,
                                          kind="primary", state="disabled")
         self.solve_button.pack(side="left")
         self.stop_button = self._button(row, "Stop", self.stop_replay, kind="ghost", state="disabled")
         self.stop_button.pack(side="left", padx=8)
-        self.give_up_button = self._button(row, "Give up", self.give_up, kind="ghost")
-        self.give_up_button.pack(side="left")
 
         # play log
         log_card = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
@@ -707,7 +764,8 @@ class PuzzleGUI:
             self._enable(self.solve_button, True)
         else:
             self.in_play = True
-            self.set_status("Your move - 0 moves so far.", INK)
+            self.set_status("Your move - 0 moves so far. Solve it, or press 'Give up - show "
+                            "the answer'.", INK)
         self.refresh_board()
         if not rules_agree(self.board):
             self.write_log("warning: the game and the search do not list the same moves here")
@@ -731,6 +789,18 @@ class PuzzleGUI:
             self.set_status("The two boards are the same, so there is nothing to solve.", BAD)
             return False
         return self.new_game(initial, goal)
+
+    def random_board(self):
+        """Put a random board in the window, solvable to the goal in the box."""
+        try:
+            goal = parse_board(self.goal_var.get())
+        except ValueError:
+            goal = self.goal
+        board = random_state(goal)
+        started = self.new_game(board, goal)
+        # new_game() clears the log, so the line about the board goes in afterwards.
+        self.write_log(f"random board   {board}")
+        return started
 
     def load_from_file(self, path=None):
         """Read the two boards from an input file, the Task 3 format.
@@ -982,23 +1052,87 @@ def ask(question, options):
     return None
 
 
-def run_bfs_from_file():
-    """The Task 3 CLI path: read the two boards from a file and search them."""
-    describe_bfs()
+def read_boards_from_file():
+    """Ask for an input file and read the two boards from it, the Task 3 format."""
     path = input("Path to input file (e.g. sample_8_moves.txt): ").strip()
     try:
-        initial_state, goal_state = parse_state_file(path)
+        initial, goal = parse_state_file(path)
     except (OSError, ValueError) as error:
         print(f"Could not read input: {error}")
-        return
-    print("Initial state:\n" + board_str(initial_state))
-    print("Goal state:\n" + board_str(goal_state))
+        return None, None
+    return initial, goal
+
+
+def solve_typed():
+    """Task 3 with the two boards typed in: explain the algorithm, then search."""
+    describe_bfs()
+    initial = read_state("Initial state ('R' for a random board): ", random_from=DEFAULT_GOAL)
+    goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
+    print("Initial state:")
+    print_board(initial)
+    print("Goal state:")
+    print_board(goal)
     print("\nSearching...")
-    solve(initial_state, goal_state)
+    solve(initial, goal)
+
+
+def solve_from_file():
+    """Task 3 with the two boards read from a file."""
+    describe_bfs()
+    initial, goal = read_boards_from_file()
+    if initial is None:
+        return
+    print("Initial state:\n" + board_str(initial))
+    print("Goal state:\n" + board_str(goal))
+    print("\nSearching...")
+    solve(initial, goal)
+
+
+def after_game(result):
+    """After the player solves the board or quits, offer BFS's answer.
+
+    This is the CLI half of the same flow the window has: solve it if you can, and
+    otherwise let the search show you the way.
+    """
+    if not result:
+        return
+    outcome, initial, goal, moves, state = result
+    if outcome == "solved":
+        question = f"That was {moves} move(s). Show the optimal solution with BFS?"
+    elif outcome == "quit":
+        question = (f"You stopped after {moves} move(s). Solve the board you are on "
+                    f"with BFS?")
+    else:
+        return                                  # unsolvable, or no input left
+    print(question)
+    try:
+        answer = input("(Y/N): ").strip().upper()
+    except EOFError:
+        print()
+        return
+    if answer != 'Y':
+        print("No answer shown.")
+        return
+    if outcome == "solved":
+        node, expanded = bfs(initial, goal)
+        print_solution(node)
+        print(f"You: {moves} move(s). BFS: {node.depth} move(s), {expanded} states expanded.")
+        if node.depth == moves:
+            print("That is the optimal number of moves for this board.")
+    else:
+        node, expanded = bfs(state, goal)
+        if node is None:
+            print("BFS found no route from here.")
+            return
+        print_solution(node)
+        start_node, _ = bfs(initial, goal)
+        print(f"BFS needs {node.depth} more move(s) from where you stopped.")
+        print(f"From the board you started with, BFS needs {start_node.depth} move(s) in "
+              f"total and you had played {moves}.")
 
 
 def main_menu():
-    """The entry point: GUI or CLI first, then the game or the search."""
+    """The entry point: GUI or CLI first, then the task."""
     print("DS 170 / CMSC 170 - Laboratory Exercise No. 3")
     print("8-puzzle and breadth-first search\n")
 
@@ -1009,21 +1143,29 @@ def main_menu():
         print("Goodbye.")
         return
 
-    # Both tasks are offered in both ways of running the program.
+    # The same four things are available either way; the window offers the random
+    # board and the file itself, so it only needs to know which task it is for.
     task = ask("What do you want to do?",
-               [("1", "play the 8-puzzle game (Task 2)"),
-                ("2", "solve a board with BFS (Task 3)")])
+               [("1", "play the 8-puzzle game, typing the boards (Task 2)"),
+                ("2", "play the game with the boards from a file"),
+                ("3", "solve a board you type with BFS (Task 3)"),
+                ("4", "solve a board from a file with BFS (Task 3)")])
     if task is None:
         print("Goodbye.")
         return
 
     if mode == '1':
-        # One window, two modes: play it yourself, or drive the search.
-        main("game" if task == '1' else "bfs")
+        main("game" if task in ('1', '2') else "bfs")
     elif task == '1':
-        play()
+        after_game(play())
+    elif task == '2':
+        initial, goal = read_boards_from_file()
+        if initial is not None:
+            after_game(play(initial, goal))
+    elif task == '3':
+        solve_typed()
     else:
-        run_bfs_from_file()
+        solve_from_file()
 
 
 if __name__ == "__main__":
