@@ -172,7 +172,11 @@ def play():
         print_board(state)
         options = get_possible_moves(state)
         print("Available: " + ", ".join(f"'{k}' {MOVES[k][0]}" for k in options))
-        key = input("Your move: ").strip().upper()
+        try:
+            key = input("Your move: ").strip().upper()
+        except EOFError:
+            print("\nNo input left, ending the game.")
+            return
         if key == 'Q':
             print("Game ended.")
             return
