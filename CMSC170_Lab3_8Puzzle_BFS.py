@@ -236,12 +236,15 @@ def read_state(prompt, default=None, random_from=None):
 
 
 # ---------------------------------------------------------------------- game
-def play(initial=None, goal=None):
+def play(initial=None, goal=None, instructions=True):
     """The game. Returns (how it ended, initial, goal, moves played, final board).
 
     `initial` and `goal` are used when the boards were already read from a file.
+    `instructions` is False when the player asked not to print the description, which
+    is long: the rules are still printed by show_instructions() when it is called.
     """
-    show_instructions()
+    if instructions:
+        show_instructions()
     if initial is None:
         initial = read_state("Initial state ('R' for a random board): ",
                              random_from=DEFAULT_GOAL)
@@ -1201,9 +1204,10 @@ def read_boards_from_file():
     return initial, goal
 
 
-def solve_typed():
+def solve_typed(instructions=True):
     """Task 3 with the two boards typed in: explain the algorithm, then search."""
-    describe_bfs()
+    if instructions:
+        describe_bfs()
     initial = read_state("Initial state ('R' for a random board): ", random_from=DEFAULT_GOAL)
     goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
     print("Initial state:")
@@ -1214,9 +1218,10 @@ def solve_typed():
     solve(initial, goal)
 
 
-def solve_from_file():
+def solve_from_file(instructions=True):
     """Task 3 with the two boards read from a file."""
-    describe_bfs()
+    if instructions:
+        describe_bfs()
     initial, goal = read_boards_from_file()
     if initial is None:
         return
@@ -1287,6 +1292,16 @@ def main_menu():
         main()
         return
 
+    # The description is the same long text in both tasks (how to play, or how BFS
+    # works), so in the terminal it is the player's choice whether to read it.
+    description = ask("Print the description before the puzzle starts?",
+                      [("1", "yes, print it (how to play, or how the search works)"),
+                       ("2", "no, skip it and go straight to the puzzle")])
+    if description is None:
+        print("Goodbye.")
+        return
+    show_description = description == '1'
+
     # In the terminal there is no window to click, so the four things are listed here.
     task = ask("What do you want to do?",
                [("1", "play the 8-puzzle game, typing the boards (Task 2)"),
@@ -1298,15 +1313,15 @@ def main_menu():
         return
 
     if task == '1':
-        after_game(play())
+        after_game(play(instructions=show_description))
     elif task == '2':
         initial, goal = read_boards_from_file()
         if initial is not None:
-            after_game(play(initial, goal))
+            after_game(play(initial, goal, instructions=show_description))
     elif task == '3':
-        solve_typed()
+        solve_typed(show_description)
     else:
-        solve_from_file()
+        solve_from_file(show_description)
 
 
 if __name__ == "__main__":

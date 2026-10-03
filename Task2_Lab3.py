@@ -216,12 +216,15 @@ def read_state(prompt, default=None, random_from=None):
 
 
 # ---------------------------------------------------------------------- game
-def play(initial=None, goal=None):
+def play(initial=None, goal=None, instructions=True):
     """The game. Returns (how it ended, initial, goal, moves played, final board).
 
     `initial` and `goal` are used when the boards were already read from a file.
+    `instructions` is False when the player asked not to print the description, which
+    is long: the rules are still printed by show_instructions() when it is called.
     """
-    show_instructions()
+    if instructions:
+        show_instructions()
     if initial is None:
         initial = read_state("Initial state ('R' for a random board): ",
                              random_from=DEFAULT_GOAL)
