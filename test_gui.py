@@ -25,6 +25,8 @@ import tkinter as tk
 import gui_8puzzle as gui_module
 from gui_8puzzle import PuzzleGUI, game_moves, key_for_click, parse_board, rules_agree
 
+REPO = pathlib.Path(__file__).resolve().parent
+
 GOAL = (1, 2, 3, 4, 5, 6, 7, 8, 0)
 SAMPLE = (1, 5, 2, 7, 4, 3, 8, 6, 0)          # the handout board: 8 moves away
 SOLUTION = list("AAWDWDXX")
@@ -247,6 +249,43 @@ pump(root, 60)
 check("pressing 'w' plays the blank up through the key binding",
       app.player_moves == ['W'], f"moves: {app.player_moves}")
 root.withdraw()
+
+
+# 7. The two modes, and loading a board from a file.
+
+section("7. BFS mode, and the file loader")
+
+bfs_root = tk.Tk()
+bfs_root.withdraw()
+bfs_app = PuzzleGUI(bfs_root, mode="bfs")
+check("the window opens in BFS mode", bfs_app.mode == "bfs")
+check("the optimal-solution button is ready straight away in BFS mode",
+      str(bfs_app.solve_button["state"]) == "normal")
+check("the window says which mode it is in", "BFS mode" in bfs_app.status["text"],
+      bfs_app.status["text"][:50])
+check("the puzzle can still be played in BFS mode", bfs_app.play('A') and bfs_app.player_moves == ['A'])
+
+bfs_app.new_game(SAMPLE, GOAL)
+check("the answer can be asked for without solving the puzzle first", bfs_app.show_optimal())
+check("the working out is written into the log",
+      "states expanded" in bfs_app.log.get("1.0", "end"))
+check("the number of expanded states is kept", bfs_app.optimal_expanded is not None,
+      f"{bfs_app.optimal_expanded} expanded")
+check("the answer is the same 8 moves", bfs_app.optimal_moves == SOLUTION)
+bfs_app.stop_replay()
+bfs_root.destroy()
+
+# The GUI's version of the Task 3 file option.
+check("a board file can be loaded", app.load_from_file(str(REPO / "sample_8_moves.txt")))
+check("the loaded boards are the file's boards", app.initial == SAMPLE and app.goal == GOAL)
+check("the log names the file that was loaded",
+      "sample_8_moves.txt" in app.log.get("1.0", "end"))
+check("a file with a repeated tile is refused",
+      app.load_from_file(str(REPO / "invalid_duplicate.txt")) is False)
+check("a missing file is refused too",
+      app.load_from_file(str(REPO / "not_here.txt")) is False)
+check("the window says why the file was refused",
+      "Cannot read that file" in app.status["text"], app.status["text"][:60])
 
 root.destroy()
 
