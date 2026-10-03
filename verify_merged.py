@@ -167,6 +167,13 @@ check("running the file asks how to run it and quits cleanly on Q",
       solved.returncode == 0 and "How do you want to run the program?" in solved.stdout
       and "with a GUI" in solved.stdout and "CLI only" in solved.stdout,
       f"exit {solved.returncode}")
+# Choosing the window must not ask anything else: everything in it is a click.
+source_text = SUBMISSION.read_text()
+menu_body = source_text[source_text.index("def main_menu"):]
+gui_branch = menu_body[menu_body.index("if mode == '1'"):menu_body.index("# In the terminal there is no window")]
+check("choosing the window asks nothing else in the terminal",
+      "ask(" not in gui_branch and "main()" in gui_branch, gui_branch.strip()[-60:])
+
 after_choice = run_menu("2\nQ\n")
 check("all four tasks are offered once the way of running it is chosen",
       all(text in after_choice.stdout for text in
@@ -178,8 +185,10 @@ check("all four tasks are offered once the way of running it is chosen",
 check("the file option is offered for both tasks",
       "boards from a file" in after_choice.stdout
       and "from a file with BFS" in after_choice.stdout)
+end_of_input = run_menu("2\n")
 check("the menu ends cleanly when the input runs out",
-      run_menu("1\n").returncode == 0 and "No input left" in run_menu("1\n").stdout)
+      end_of_input.returncode == 0 and "No input left" in end_of_input.stdout,
+      f"exit {end_of_input.returncode}")
 
 
 # 4. The game.
@@ -292,6 +301,27 @@ bfs_app = lab.PuzzleGUI(bfs_root, mode="bfs")
 check("the window opens in BFS mode with the button ready",
       bfs_app.mode == "bfs" and str(bfs_app.solve_button["state"]) == "normal")
 check("BFS mode says what to press", "BFS mode" in bfs_app.status["text"])
+check("the window has a button for each task",
+      set(bfs_app.mode_buttons) == {"game", "bfs"})
+bfs_app.set_mode("game")
+check("switching back to playing disables the search until the puzzle is done",
+      str(bfs_app.solve_button["state"]) == "disabled"
+      and bfs_app.subtitle.cget("text").startswith("Play it yourself"))
+check("the window shows the game description in that mode",
+      "How a move works" in bfs_app.about.get("1.0", "end"))
+check("the description starts folded away",
+      bfs_app.about_body.winfo_manager() == ""
+      and "(click to show)" in bfs_app.about_toggle.cget("text"))
+bfs_app.toggle_about()
+check("a click opens it", bfs_app.about_body.winfo_manager() == "pack")
+bfs_app.toggle_about()
+check("and another click folds it away again", bfs_app.about_body.winfo_manager() == "")
+bfs_app.set_mode("bfs")
+check("and the search description in the other",
+      "Breadth-First Search" in bfs_app.about.get("1.0", "end"))
+bfs_app.set_mode("bfs")
+check("switching to the search is done with a click, and it comes back ready",
+      str(bfs_app.solve_button["state"]) == "normal")
 check("the answer can be asked for without solving the puzzle", bfs_app.show_optimal())
 check("BFS mode records the working out",
       bfs_app.optimal_expanded == 149 and bfs_app.optimal_moves == SOLUTION,

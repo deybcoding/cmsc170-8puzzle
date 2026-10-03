@@ -259,6 +259,11 @@ bfs_root = tk.Tk()
 bfs_root.withdraw()
 bfs_app = PuzzleGUI(bfs_root, mode="bfs")
 check("the window opens in BFS mode", bfs_app.mode == "bfs")
+check("there is a toggle button for each task", set(bfs_app.mode_buttons) == {"game", "bfs"})
+check("the panel explains the search in this mode",
+      "Breadth-First Search" in bfs_app.about.get("1.0", "end")
+      and "ABOUT THIS MODE" in bfs_app.about_toggle.cget("text"))
+check("the BFS description is folded away too", not bfs_app.about_open)
 check("the optimal-solution button is ready straight away in BFS mode",
       str(bfs_app.solve_button["state"]) == "normal")
 check("the window says which mode it is in", "BFS mode" in bfs_app.status["text"],
@@ -286,6 +291,43 @@ check("a missing file is refused too",
       app.load_from_file(str(REPO / "not_here.txt")) is False)
 check("the window says why the file was refused",
       "Cannot read that file" in app.status["text"], app.status["text"][:60])
+
+# Switching task inside the window, which is what replaced the terminal question.
+app.new_game(SAMPLE, GOAL)
+app.set_mode("bfs")
+check("clicking over to the search readies the button without solving anything",
+      app.mode == "bfs" and str(app.solve_button["state"]) == "normal"
+      and not app.solved)
+check("the give-up button is gone in BFS mode", not app.give_up_button.winfo_ismapped())
+app.set_mode("game")
+check("clicking back to playing hides the search again until the puzzle is done",
+      app.mode == "game" and str(app.solve_button["state"]) == "disabled")
+app.give_up()
+check("giving up from the game mode readies the button",
+      str(app.solve_button["state"]) == "normal" and app.gave_up)
+check("the panel explains how to play in game mode",
+      "8-Puzzle Game Start" in app.about.get("1.0", "end")
+      and "How a move works" in app.about.get("1.0", "end")
+      and "HOW TO PLAY" in app.about_toggle.cget("text"))
+check("the description starts folded away, out of the way",
+      not app.about_open and app.about_body.winfo_manager() == "")
+check("the folded row says there is a description to read",
+      "(click to show)" in app.about_toggle.cget("text"))
+
+# Opening it, and folding it away again: this is what keeps the window short.
+short = app.root.winfo_reqheight()
+app.toggle_about()
+check("clicking the row opens the description",
+      app.about_open and app.about_body.winfo_manager() == "pack"
+      and app.root.winfo_reqheight() > short,
+      f"{app.root.winfo_reqheight()} vs {short}")
+check("the row now offers to hide it", "(click to hide)" in app.about_toggle.cget("text"))
+app.toggle_about()
+check("clicking again folds it away and the window shrinks back",
+      not app.about_open and app.about_body.winfo_manager() == ""
+      and app.root.winfo_reqheight() == short)
+check("the description is the same text the CLI prints",
+      app.about.get("1.0", "end").strip() == gui_module.game.GAME_DESCRIPTION.strip())
 
 root.destroy()
 

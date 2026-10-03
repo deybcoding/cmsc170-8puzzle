@@ -156,8 +156,14 @@ MOVES_TO_SOLVE = "A\nA\nW\nD\nW\nD\nX\nX\n"
 
 status, out, err = play("[1,5,2,7,4,3,8,6,' ']\n\n" + MOVES_TO_SOLVE, "solve the 8-move board")
 check("the program explains the problem and the rules before asking for input",
-      "8-Puzzle Game Start" in out and "Rules:" in out
-      and out.index("Rules:") < out.index("Initial state"))
+      "8-Puzzle Game Start" in out and "Rules" in out
+      and out.index("Rules") < out.index("Initial state"))
+check("the description says how the board is written down",
+      "How the board is written" in out)
+check("the description says what moving the empty space does",
+      "You never move a tile directly" in out and "slides into the space" in out)
+check("the description says when the puzzle is finished",
+      "How you win" in out and "match the goal board" in out)
 check("the instructions show the lab sheet's input format",
       "[1, 2, 3, 4, ' ', 8, 5, 6, 7]" in out)
 check("the key legend is printed", "'W' Move Up" in out and "'D' Move Right" in out)
