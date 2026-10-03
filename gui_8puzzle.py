@@ -231,10 +231,16 @@ class PuzzleGUI:
                     if self.mode == "game" else
                     "Breadth-first search on the 8-puzzle: set a board, then watch it solved")
         tk.Label(head, text=subtitle, font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
+        if self.mode == "game":
+            rules = ("Tiles 1-8 and one empty space. Click a tile next to the space, or move the space "
+                     "with W (up), A (left), X (down), D (right) or the arrow keys. Solve the puzzle, "
+                     "or press 'Give up' to see BFS solve it for you.")
+        else:
+            rules = ("Set the two boards - type them, press 'Random board', or press 'Load from file' "
+                     "for the Task 3 file format - then press 'Show the optimal solution (BFS)' to "
+                     "watch the search work.")
         tk.Label(head, justify="left", font=(self.ui_font, 10), bg=BG, fg=MUTED, wraplength=500,
-                 text=("Tiles 1-8 and one empty space. Click a tile next to the space, or move "
-                       "the space with W (up), A (left), X (down), D (right) or the arrow keys.")).pack(
-            anchor="w", pady=(8, 0))
+                 text=rules).pack(anchor="w", pady=(8, 0))
 
         inputs = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
         inputs.pack(fill="x", padx=26, pady=(14, 0))
@@ -248,9 +254,12 @@ class PuzzleGUI:
         self._entry(inputs, self.goal_var).grid(row=1, column=1, sticky="w", padx=(8, 14))
         # The button goes under the two boxes: next to them the row is wider than the
         # window and the label gets cut off.
-        self.load_button = self._button(inputs, "Load from file", self.load_from_file,
-                                        kind="ghost")
-        self.load_button.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
+        tools = tk.Frame(inputs, bg=CARD)
+        tools.grid(row=2, column=0, sticky="w", padx=(14, 0), pady=(12, 14))
+        self.random_button = self._button(tools, "Random board", self.random_board, kind="ghost")
+        self.random_button.pack(side="left")
+        self.load_button = self._button(tools, "Load from file", self.load_from_file, kind="ghost")
+        self.load_button.pack(side="left", padx=8)
         self.new_game_button = self._button(inputs, "New game", self.read_entries_and_start,
                                             kind="primary")
         self.new_game_button.grid(row=2, column=1, sticky="e", padx=(0, 14), pady=(12, 14))
@@ -291,14 +300,18 @@ class PuzzleGUI:
         # buttons
         row = tk.Frame(self.root, bg=BG)
         row.pack(fill="x", padx=26, pady=(12, 0))
+        # In game mode the first thing on offer is getting unstuck: "Give up" works
+        # straight away and unlocks the animation, instead of a greyed-out button the
+        # player cannot use yet.
+        self.give_up_button = self._button(row, "Give up - show the answer", self.give_up,
+                                           kind="ghost")
+        if self.mode == "game":
+            self.give_up_button.pack(side="left", padx=(0, 8))
         self.solve_button = self._button(row, "Show the optimal solution (BFS)", self.show_optimal,
                                          kind="primary", state="disabled")
         self.solve_button.pack(side="left")
         self.stop_button = self._button(row, "Stop", self.stop_replay, kind="ghost", state="disabled")
         self.stop_button.pack(side="left", padx=8)
-        self.give_up_button = self._button(row, "Give up", self.give_up, kind="ghost")
-        if self.mode == "game":
-            self.give_up_button.pack(side="left")
 
         # play log
         log_card = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
@@ -376,7 +389,8 @@ class PuzzleGUI:
             self._enable(self.solve_button, True)
         else:
             self.in_play = True
-            self.set_status("Your move - 0 moves so far.", INK)
+            self.set_status("Your move - 0 moves so far. Solve it, or press 'Give up - show "
+                            "the answer'.", INK)
         self.refresh_board()
         if not rules_agree(self.board):
             self.write_log("warning: the game and the search do not list the same moves here")
@@ -400,6 +414,18 @@ class PuzzleGUI:
             self.set_status("The two boards are the same, so there is nothing to solve.", BAD)
             return False
         return self.new_game(initial, goal)
+
+    def random_board(self):
+        """Put a random board in the window, solvable to the goal in the box."""
+        try:
+            goal = parse_board(self.goal_var.get())
+        except ValueError:
+            goal = self.goal
+        board = game.random_state(goal)
+        started = self.new_game(board, goal)
+        # new_game() clears the log, so the line about the board goes in afterwards.
+        self.write_log(f"random board   {board}")
+        return started
 
     def load_from_file(self, path=None):
         """Read the two boards from an input file, the Task 3 format.
