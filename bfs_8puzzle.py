@@ -14,16 +14,40 @@ from Task2_Lab3 import get_possible_moves, is_valid_state, is_solvable
 
 # Describing BFS
 
-def describe_bfs():
-    print("""
-=== Breadth-First Search (BFS) ===
+# What BFS is, in one place: the CLI prints it and the window shows it.
+BFS_DESCRIPTION = """=== Breadth-First Search (BFS) ===
 BFS is an uninformed search. It starts at the root (initial state) and
 explores ALL nodes at depth d before any node at depth d+1.
 
-Because every move costs 1 and the queue is FIFO, the first time the
-goal is reached is via a shortest path, so BFS is complete and optimal.
-Time: O(V + E).  Space: O(V) (visited set + queue).
-""")
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second."""
+
+
+def describe_bfs():
+    """Print the description of the algorithm."""
+    print(BFS_DESCRIPTION)
+    print()
 
 # Node class
 

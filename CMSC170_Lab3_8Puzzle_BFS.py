@@ -152,25 +152,58 @@ def print_board(state):
         print("+---+---+---+")
 
 
+# The description of the game, in one place: the CLI prints it and the window shows it,
+# so both ways of playing explain the puzzle the same way.
+GAME_DESCRIPTION = """8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached."""
+
+
 def show_instructions():
-    print("8-Puzzle Game Start")
-    print("The 8-puzzle problem is a 3x3 board with 8 tiles")
-    print("numbered from 1 to 8 and one empty space.\n")
-    print("The objective is to begin with an arbitrary")
-    print("configuration of tiles, and move them to match")
-    print("the final configuration.\n")
-    print("Rules:")
-    print("1. Input the initial state and goal state of the puzzle using")
-    print("   this format:")
-    print("     [1, 2, 3, 4, ' ', 8, 5, 6, 7]")
-    print("2. Use the following keys to move the empty")
-    print("   block:")
-    print("     'W' Move Up       'A' Move Left")
-    print("     'X' Move Down     'D' Move Right")
-    print("   ('R' at the first prompt gives a random board that can")
-    print("    reach the default goal)")
-    print("   ('Q' quits, and you can then watch BFS solve the board")
-    print("    you are on)\n")
+    """Print the description of the puzzle and the rules, before anything is asked."""
+    print(GAME_DESCRIPTION)
+    print()
 
 
 def read_state(prompt, default=None, random_from=None):
@@ -257,16 +290,40 @@ def play(initial=None, goal=None):
 
 # Describing BFS
 
-def describe_bfs():
-    print("""
-=== Breadth-First Search (BFS) ===
+# What BFS is, in one place: the CLI prints it and the window shows it.
+BFS_DESCRIPTION = """=== Breadth-First Search (BFS) ===
 BFS is an uninformed search. It starts at the root (initial state) and
 explores ALL nodes at depth d before any node at depth d+1.
 
-Because every move costs 1 and the queue is FIFO, the first time the
-goal is reached is via a shortest path, so BFS is complete and optimal.
-Time: O(V + E).  Space: O(V) (visited set + queue).
-""")
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second."""
+
+
+def describe_bfs():
+    """Print the description of the algorithm."""
+    print(BFS_DESCRIPTION)
+    print()
 
 # Node class
 
@@ -464,7 +521,7 @@ OFF = "#e3e6ea"                 # disabled button
 OK = "#1a7f37"
 BAD = "#b42318"
 
-TILE_SIZE = 104
+TILE_SIZE = 92
 TILE_GAP = 10
 BOARD_PAD = 14
 
@@ -580,19 +637,19 @@ class PuzzleGUI:
         self.replay_boards = []         # the boards the animation has shown
         self.replay_job = None
         self.solved = False
+        self.gave_up = False
+        self.bfs_explained = False
 
-        root.title("8-Puzzle - play it, then watch BFS solve it" if mode == "game"
-                   else "8-Puzzle - breadth-first search")
+        root.title("8-Puzzle")
         root.configure(bg=BG)
         root.resizable(False, False)
         self.ui_font = pick_font(UI_FONT_CHOICES)
         self.button_kinds = {}          # so the flat buttons can be switched on and off
 
         self._build_widgets()
-        # Ask the window how tall the content is instead of guessing a height, so the
-        # log card is never pushed off the bottom.
-        root.update_idletasks()
-        root.geometry(f"560x{root.winfo_reqheight() + 24}+30+20")
+        self.set_mode(mode)
+        self.resize_to_content()
+        root.geometry("+30+20")
         self._bind_keys()
         self.new_game()
 
@@ -602,20 +659,42 @@ class PuzzleGUI:
         head = tk.Frame(self.root, bg=BG)
         head.pack(fill="x", padx=26, pady=(16, 0))
         tk.Label(head, text="8-Puzzle", font=(self.ui_font, 24, "bold"), bg=BG, fg=INK).pack(anchor="w")
-        subtitle = ("Play it yourself, then watch breadth-first search solve it"
-                    if self.mode == "game" else
-                    "Breadth-first search on the 8-puzzle: set a board, then watch it solved")
-        tk.Label(head, text=subtitle, font=(self.ui_font, 11), bg=BG, fg=MUTED).pack(anchor="w")
-        if self.mode == "game":
-            rules = ("Tiles 1-8 and one empty space. Click a tile next to the space, or move the space "
-                     "with W (up), A (left), X (down), D (right) or the arrow keys. Solve the puzzle, "
-                     "or press 'Give up' to see BFS solve it for you.")
-        else:
-            rules = ("Set the two boards - type them, press 'Random board', or press 'Load from file' "
-                     "for the Task 3 file format - then press 'Show the optimal solution (BFS)' to "
-                     "watch the search work.")
-        tk.Label(head, justify="left", font=(self.ui_font, 10), bg=BG, fg=MUTED, wraplength=500,
-                 text=rules).pack(anchor="w", pady=(8, 0))
+        self.subtitle = tk.Label(head, text="", font=(self.ui_font, 11), bg=BG, fg=MUTED)
+        self.subtitle.pack(anchor="w")
+
+        # Which task the window is for. This used to be a question in the terminal, which
+        # made no sense once the window was open: it is a click here.
+        toggle = tk.Frame(head, bg=BG)
+        toggle.pack(anchor="w", pady=(10, 0))
+        self.mode_buttons = {}
+        for key, text in (("game", "Play the puzzle (Task 2)"),
+                          ("bfs", "Solve with BFS (Task 3)")):
+            button = self._button(toggle, text, lambda chosen=key: self.set_mode(chosen),
+                                  kind="primary")
+            button.pack(side="left", padx=(0, 8))
+            self.mode_buttons[key] = button
+
+        # The explanation itself, in the same words the CLI prints. The card folds away
+        # when the player does not need it, so the window can be short.
+        self.about_card = tk.Frame(self.root, bg=CARD, highlightbackground=LINE,
+                                   highlightthickness=1)
+        self.about_card.pack(fill="x", padx=26, pady=(12, 0))
+        self.about_open = False
+        self.about_toggle = tk.Button(self.about_card, text="", command=self.toggle_about,
+                                      font=(self.ui_font, 8, "bold"), bg=CARD, fg=MUTED,
+                                      activebackground=CARD, activeforeground=INK,
+                                      relief="flat", borderwidth=0, cursor="hand2",
+                                      anchor="w", padx=14, pady=8)
+        self.about_toggle.pack(fill="x")
+        # Folded away until it is asked for: the title row says it is there.
+        self.about_body = tk.Frame(self.about_card, bg=CARD)
+        self.about = tk.Text(self.about_body, height=13, font=(self.ui_font, 9), bg=CARD, fg=INK,
+                             relief="flat", highlightthickness=0, borderwidth=0, wrap="word",
+                             state="disabled")
+        self.about.pack(side="left", fill="both", expand=True, padx=(14, 0), pady=(0, 12))
+        scroll = tk.Scrollbar(self.about_body, command=self.about.yview, width=12)
+        scroll.pack(side="right", fill="y", pady=(0, 12), padx=(0, 10))
+        self.about.config(yscrollcommand=scroll.set)
 
         inputs = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
         inputs.pack(fill="x", padx=26, pady=(14, 0))
@@ -680,8 +759,6 @@ class PuzzleGUI:
         # player cannot use yet.
         self.give_up_button = self._button(row, "Give up - show the answer", self.give_up,
                                            kind="ghost")
-        if self.mode == "game":
-            self.give_up_button.pack(side="left", padx=(0, 8))
         self.solve_button = self._button(row, "Show the optimal solution (BFS)", self.show_optimal,
                                          kind="primary", state="disabled")
         self.solve_button.pack(side="left")
@@ -690,10 +767,10 @@ class PuzzleGUI:
 
         # play log
         log_card = tk.Frame(self.root, bg=CARD, highlightbackground=LINE, highlightthickness=1)
-        log_card.pack(fill="both", expand=True, padx=26, pady=(12, 16))
+        log_card.pack(fill="x", padx=26, pady=(12, 16))
         tk.Label(log_card, text="PLAY LOG", font=(self.ui_font, 8, "bold"), bg=CARD, fg=MUTED).pack(
             anchor="w", padx=14, pady=(10, 0))
-        self.log = tk.Text(log_card, height=5, font=(self.ui_font, 9), bg=CARD, fg=INK,
+        self.log = tk.Text(log_card, height=4, font=(self.ui_font, 9), bg=CARD, fg=INK,
                            relief="flat", highlightthickness=0, borderwidth=0, wrap="word",
                            state="disabled")
         self.log.pack(fill="both", expand=True, padx=14, pady=(4, 12))
@@ -732,6 +809,64 @@ class PuzzleGUI:
         self.root.bind("<Left>", lambda event: self.play('A'))
         self.root.bind("<Right>", lambda event: self.play('D'))
 
+    def set_mode(self, mode):
+        """Switch the window between playing the puzzle and driving the search."""
+        self.mode = mode
+        for key, button in self.mode_buttons.items():
+            active = key == mode
+            background, ink = (PRIMARY, "#ffffff") if active else (GHOST, INK)
+            button.config(bg=background, fg=ink, activebackground=background)
+        if mode == "game":
+            self.subtitle.config(text="Play it yourself, then watch breadth-first search solve it")
+            self.show_description(GAME_DESCRIPTION)
+        else:
+            self.subtitle.config(text="Breadth-first search on the 8-puzzle: set a board, "
+                                      "then watch it solved")
+            self.show_description(BFS_DESCRIPTION)
+        self.refresh_board()
+        self.update_buttons()
+
+    def toggle_about(self):
+        """Fold the description away, or open it again, and resize the window to fit."""
+        self.about_open = not self.about_open
+        if self.about_open:
+            self.about_body.pack(fill="both", expand=True)
+        else:
+            self.about_body.pack_forget()
+        self.update_about_title()
+        self.resize_to_content()
+
+    def update_about_title(self):
+        """The card's title, with an arrow showing whether it is open."""
+        name = "HOW TO PLAY" if self.mode == "game" else "ABOUT THIS MODE"
+        arrow = "v" if self.about_open else ">"
+        self.about_toggle.config(text=f"{arrow}  {name}   (click to "
+                                      f"{'hide' if self.about_open else 'show'})")
+
+    def resize_to_content(self):
+        """Ask the window how tall its content is instead of guessing."""
+        self.root.update_idletasks()
+        self.root.geometry(f"560x{self.root.winfo_reqheight() + 24}")
+
+    def show_description(self, text):
+        """Put a description in the panel, scrolled back to the top."""
+        self.about.config(state="normal")
+        self.about.delete("1.0", "end")
+        self.about.insert("1.0", text)
+        self.about.config(state="disabled")
+        self.about.yview_moveto(0.0)
+        self.update_about_title()
+
+    def update_buttons(self):
+        """Button states for the mode and for how far the puzzle has got."""
+        if not hasattr(self, "solve_button"):
+            return
+        self._enable(self.solve_button, self.mode == "bfs" or self.solved or self.gave_up)
+        if self.mode == "game":
+            self.give_up_button.pack(side="left", padx=(0, 8), before=self.solve_button)
+        else:
+            self.give_up_button.pack_forget()
+
     # ------------------------------------------------------------------- play
     def new_game(self, initial=None, goal=None):
         """Start again from these two boards (or from the ones already set)."""
@@ -748,6 +883,7 @@ class PuzzleGUI:
         self.replay_index = 0
         self.replay_boards = []
         self.solved = self.board == self.goal
+        self.gave_up = False
         self._enable(self.solve_button, False)
         self._enable(self.stop_button, False)
         self.clear_log()
@@ -772,9 +908,9 @@ class PuzzleGUI:
         if self.mode == "bfs" and self.in_play:
             # In this mode the search is the point of the window, so the answer is
             # offered straight away instead of after the player solves the puzzle.
-            self._enable(self.solve_button, True)
             self.set_status("BFS mode - press 'Show the optimal solution (BFS)' to watch the "
                             "search from this board.", INK)
+        self.update_buttons()
         return self.in_play
 
     def read_entries_and_start(self):
@@ -910,6 +1046,8 @@ class PuzzleGUI:
         self.optimal = node
         self.optimal_moves = [step.action for step in node.path()[1:]]
         self.in_play = False
+        self.gave_up = True
+        self.update_buttons()
         self.write_log(f"gave up        after {len(self.player_moves)} move(s) | "
                        f"BFS {len(self.optimal_moves)} move(s), {expanded} states expanded")
         self.set_status(f"BFS needs {len(self.optimal_moves)} moves from here. "
@@ -1143,8 +1281,13 @@ def main_menu():
         print("Goodbye.")
         return
 
-    # The same four things are available either way; the window offers the random
-    # board and the file itself, so it only needs to know which task it is for.
+    if mode == '1':
+        # A window: everything is a click in it (the two buttons at the top switch
+        # between playing the puzzle and driving the search), so nothing else is asked.
+        main()
+        return
+
+    # In the terminal there is no window to click, so the four things are listed here.
     task = ask("What do you want to do?",
                [("1", "play the 8-puzzle game, typing the boards (Task 2)"),
                 ("2", "play the game with the boards from a file"),
@@ -1154,9 +1297,7 @@ def main_menu():
         print("Goodbye.")
         return
 
-    if mode == '1':
-        main("game" if task in ('1', '2') else "bfs")
-    elif task == '1':
+    if task == '1':
         after_game(play())
     elif task == '2':
         initial, goal = read_boards_from_file()

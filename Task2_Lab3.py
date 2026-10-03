@@ -132,25 +132,58 @@ def print_board(state):
         print("+---+---+---+")
 
 
+# The description of the game, in one place: the CLI prints it and the window shows it,
+# so both ways of playing explain the puzzle the same way.
+GAME_DESCRIPTION = """8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached."""
+
+
 def show_instructions():
-    print("8-Puzzle Game Start")
-    print("The 8-puzzle problem is a 3x3 board with 8 tiles")
-    print("numbered from 1 to 8 and one empty space.\n")
-    print("The objective is to begin with an arbitrary")
-    print("configuration of tiles, and move them to match")
-    print("the final configuration.\n")
-    print("Rules:")
-    print("1. Input the initial state and goal state of the puzzle using")
-    print("   this format:")
-    print("     [1, 2, 3, 4, ' ', 8, 5, 6, 7]")
-    print("2. Use the following keys to move the empty")
-    print("   block:")
-    print("     'W' Move Up       'A' Move Left")
-    print("     'X' Move Down     'D' Move Right")
-    print("   ('R' at the first prompt gives a random board that can")
-    print("    reach the default goal)")
-    print("   ('Q' quits, and you can then watch BFS solve the board")
-    print("    you are on)\n")
+    """Print the description of the puzzle and the rules, before anything is asked."""
+    print(GAME_DESCRIPTION)
+    print()
 
 
 def read_state(prompt, default=None, random_from=None):
