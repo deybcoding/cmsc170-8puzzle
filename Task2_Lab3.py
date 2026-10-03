@@ -23,6 +23,7 @@ Moves are described by the direction the EMPTY block moves:
 """
 
 import ast
+import random
 
 BLANK = 0
 SIZE = 3
@@ -79,6 +80,24 @@ def is_solvable(initial, goal):
     return _inversions(initial) % 2 == _inversions(goal) % 2
 
 
+def random_state(goal=DEFAULT_GOAL, steps=60):
+    """A random board that can reach the goal.
+
+    It is made by playing random legal moves from the goal, so the board it returns is
+    always solvable to that goal, and no move undoes the one before it so the board
+    does not wander back to the goal.
+    """
+    undo = {'W': 'X', 'X': 'W', 'A': 'D', 'D': 'A'}
+    state, previous = goal, None
+    for _ in range(steps):
+        options = get_possible_moves(state)
+        choices = [key for key in options if key != previous] or list(options)
+        key = random.choice(choices)
+        state = options[key]
+        previous = undo[key]
+    return state if state != goal else random_state(goal, steps + 10)
+
+
 # --------------------------------------------------------------------- moves
 def get_possible_moves(state):
     """Return {key: new_state} for every legal move of the empty block.
@@ -128,14 +147,18 @@ def show_instructions():
     print("   block:")
     print("     'W' Move Up       'A' Move Left")
     print("     'X' Move Down     'D' Move Right")
-    print("   ('Q' quits the game)\n")
+    print("   ('R' at the first prompt gives a random board that can")
+    print("    reach the default goal)")
+    print("   ('Q' quits, and you can then watch BFS solve the board")
+    print("    you are on)\n")
 
 
-def read_state(prompt, default=None):
+def read_state(prompt, default=None, random_from=None):
     """Keep asking until the user types a valid state (or Enter for the default).
 
     The typed list is converted with to_state() here, so everything after this
-    point works with the blank as 0. 'Q' and Ctrl-D both stop the game cleanly.
+    point works with the blank as 0. 'R' asks for a random board when random_from
+    is given, and 'Q' and Ctrl-D both stop the game cleanly.
     """
     while True:
         try:
@@ -146,6 +169,10 @@ def read_state(prompt, default=None):
         if text.upper() == 'Q':
             print("Game ended.")
             raise SystemExit(0)
+        if text.upper() == 'R' and random_from is not None:
+            board = random_state(random_from)
+            print("  random board: " + str(board))
+            return board
         if not text and default is not None:
             return default
         try:
@@ -156,15 +183,28 @@ def read_state(prompt, default=None):
 
 
 # ---------------------------------------------------------------------- game
-def play():
+def play(initial=None, goal=None):
+    """The game. Returns (how it ended, initial, goal, moves played, final board).
+
+    `initial` and `goal` are used when the boards were already read from a file.
+    """
     show_instructions()
-    initial = read_state("Initial state: ")
-    goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
+    if initial is None:
+        initial = read_state("Initial state ('R' for a random board): ",
+                             random_from=DEFAULT_GOAL)
+    else:
+        print("Initial state:")
+        print_board(initial)
+    if goal is None:
+        goal = read_state("Goal state (press Enter for 1-8 then blank): ", DEFAULT_GOAL)
+    else:
+        print("Goal state:")
+        print_board(goal)
 
     if not is_solvable(initial, goal):
         print("\nThis initial state can never reach that goal (parity mismatch).")
         print("Please restart with a different pair.")
-        return
+        return ("unsolvable", initial, goal, 0, initial)
 
     state, moves = initial, 0
     while state != goal:
@@ -176,10 +216,10 @@ def play():
             key = input("Your move: ").strip().upper()
         except EOFError:
             print("\nNo input left, ending the game.")
-            return
+            return ("no_input", initial, goal, moves, state)
         if key == 'Q':
             print("Game ended.")
-            return
+            return ("quit", initial, goal, moves, state)
         if not validate_move(state, key):
             print("  Invalid move! The empty block can't go there (or unknown key).")
             continue
@@ -189,6 +229,7 @@ def play():
     print()
     print_board(state)
     print(f"Solved in {moves} moves!")
+    return ("solved", initial, goal, moves, state)
 
 
 if __name__ == "__main__":
