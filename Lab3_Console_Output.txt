@@ -7,8 +7,8 @@ show up after their prompts because these runs go through a terminal.
 
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
-# the two questions: how to run it, and which task
-# typed input: 2 / Q
+# the three questions: how to run it, whether to print the description, and which task
+# typed input: 2 / 1 / Q
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -19,6 +19,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -31,9 +37,8 @@ Goodbye.
 
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
-# CLI, Task 2 - the description, printed before any board is asked for | the two boards
-#   typed in and the first moves
-# typed input: 2 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D
+# CLI, Task 2 - the description, printed because it was asked for | CLI, Task 2 - the two boards typed in and the first moves
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -44,6 +49,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -158,8 +169,8 @@ No input left, ending the game.
 
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
-# CLI, Task 2 - 'R' gives a random board that can reach the goal
-# typed input: 2 / 1 / R / (Enter) / A / A
+# CLI, Task 2 - asked for no description, so the board is the first thing printed
+# typed input: 2 / 2 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / Q / N
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -170,6 +181,80 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 2
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Available: 'W' Up, 'A' Left
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 |   | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+|   | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'D' Right
+Your move: Q
+Game ended.
+You stopped after 2 move(s). Solve the board you are on with BFS?
+(Y/N): N
+No answer shown.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - 'R' gives a random board that can reach the goal
+# typed input: 2 / 1 / 1 / R / (Enter) / A / A
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -224,40 +309,38 @@ Rules
       tells you straight away when the goal cannot be reached.
 
 Initial state ('R' for a random board): R
-  random board: (0, 3, 8, 4, 7, 6, 1, 5, 2)
+  random board: (2, 1, 0, 4, 3, 5, 8, 6, 7)
 Goal state (press Enter for 1-8 then blank): 
 
 Moves so far: 0
 +---+---+---+
-|   | 3 | 8 |
+| 2 | 1 |   |
 +---+---+---+
-| 4 | 7 | 6 |
+| 4 | 3 | 5 |
 +---+---+---+
-| 1 | 5 | 2 |
+| 8 | 6 | 7 |
 +---+---+---+
-Available: 'X' Down, 'D' Right
+Available: 'A' Left, 'X' Down
 Your move: A
-  Invalid move! The empty block can't go there (or unknown key).
 
-Moves so far: 0
+Moves so far: 1
 +---+---+---+
-|   | 3 | 8 |
+| 2 |   | 1 |
 +---+---+---+
-| 4 | 7 | 6 |
+| 4 | 3 | 5 |
 +---+---+---+
-| 1 | 5 | 2 |
+| 8 | 6 | 7 |
 +---+---+---+
-Available: 'X' Down, 'D' Right
+Available: 'A' Left, 'X' Down, 'D' Right
 Your move: A
-  Invalid move! The empty block can't go there (or unknown key).
 
-Moves so far: 0
+Moves so far: 2
 +---+---+---+
-|   | 3 | 8 |
+|   | 2 | 1 |
 +---+---+---+
-| 4 | 7 | 6 |
+| 4 | 3 | 5 |
 +---+---+---+
-| 1 | 5 | 2 |
+| 8 | 6 | 7 |
 +---+---+---+
 Available: 'X' Down, 'D' Right
 Your move: 
@@ -266,7 +349,7 @@ No input left, ending the game.
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 2 - solved, and then BFS is offered and compared
-# typed input: 2 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D / W / D / X / X / Y
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D / W / D / X / X / Y
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -277,6 +360,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -492,7 +581,7 @@ That is the optimal number of moves for this board.
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 2 - quitting offers to finish the board with BFS
-# typed input: 2 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / Q / Y
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / Q / Y
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -503,6 +592,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -650,7 +745,7 @@ From the board you started with, BFS needs 8 move(s) in total and you had played
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 2 - a board that cannot reach the goal is refused at the start
-# typed input: 2 / 1 / [1,2,3,4,5,6,8,7,' '] / [1,2,3,4,5,6,7,8,' ']
+# typed input: 2 / 1 / 1 / [1,2,3,4,5,6,8,7,' '] / [1,2,3,4,5,6,7,8,' ']
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -661,6 +756,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -722,9 +823,8 @@ Please restart with a different pair.
 
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
-# CLI, Task 3 - the handout's sample board: the two boards and the search starting | the same
-#   run further on: the last levels and the total number of moves
-# typed input: 2 / 4 / sample_8_moves.txt
+# CLI, Task 3 - the handout's sample board: the two boards and the search starting | CLI, Task 3 - the same run: the last levels and the total number of moves
+# typed input: 2 / 1 / 4 / sample_8_moves.txt
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -735,6 +835,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -842,7 +948,7 @@ Nodes expanded: 149 | States stored in state_space: 149
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 3 - the same search on a board typed in instead of a file
-# typed input: 2 / 3 / [1,5,2,7,4,3,8,6,' '] / (Enter)
+# typed input: 2 / 1 / 3 / [1,5,2,7,4,3,8,6,' '] / (Enter)
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -853,6 +959,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -969,7 +1081,7 @@ Nodes expanded: 149 | States stored in state_space: 149
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 3 - a board with no solution, refused before the search runs
-# typed input: 2 / 4 / unsolvable_swap.txt
+# typed input: 2 / 1 / 4 / unsolvable_swap.txt
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -980,6 +1092,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -1032,7 +1150,7 @@ This puzzle is UNSOLVABLE: the goal is not reachable from the initial state.
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 3 - a board that already is the goal board
-# typed input: 2 / 4 / already_solved.txt
+# typed input: 2 / 1 / 4 / already_solved.txt
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -1043,6 +1161,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
@@ -1103,7 +1227,7 @@ Nodes expanded: 0 | States stored in state_space: 0
 ========================================================================
 $ python CMSC170_Lab3_8Puzzle_BFS.py
 # CLI, Task 3 - an input file with a repeated tile is refused
-# typed input: 2 / 4 / invalid_duplicate.txt
+# typed input: 2 / 1 / 4 / invalid_duplicate.txt
 ========================================================================
 DS 170 / CMSC 170 - Laboratory Exercise No. 3
 8-puzzle and breadth-first search
@@ -1114,6 +1238,12 @@ How do you want to run the program?
   Q - quit
 
 Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
 What do you want to do?
   1 - play the 8-puzzle game, typing the boards (Task 2)
   2 - play the game with the boards from a file
