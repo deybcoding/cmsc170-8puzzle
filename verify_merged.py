@@ -170,11 +170,12 @@ check("running the file asks how to run it and quits cleanly on Q",
 # Choosing the window must not ask anything else: everything in it is a click.
 source_text = SUBMISSION.read_text()
 menu_body = source_text[source_text.index("def main_menu"):]
-gui_branch = menu_body[menu_body.index("if mode == '1'"):menu_body.index("# In the terminal there is no window")]
+gui_branch = menu_body[menu_body.index("if mode == '1'"):
+                       menu_body.index("# The description is the same long text")]
 check("choosing the window asks nothing else in the terminal",
       "ask(" not in gui_branch and "main()" in gui_branch, gui_branch.strip()[-60:])
 
-after_choice = run_menu("2\nQ\n")
+after_choice = run_menu("2\n2\nQ\n")
 check("all four tasks are offered once the way of running it is chosen",
       all(text in after_choice.stdout for text in
           ("play the 8-puzzle game, typing the boards (Task 2)",
@@ -185,10 +186,26 @@ check("all four tasks are offered once the way of running it is chosen",
 check("the file option is offered for both tasks",
       "boards from a file" in after_choice.stdout
       and "from a file with BFS" in after_choice.stdout)
-end_of_input = run_menu("2\n")
+end_of_input = run_menu("2\n2\n")
 check("the menu ends cleanly when the input runs out",
       end_of_input.returncode == 0 and "No input left" in end_of_input.stdout,
       f"exit {end_of_input.returncode}")
+
+# The description is long, so in the terminal it is asked about before the task list.
+check("the CLI asks whether to print the description",
+      "Print the description before the puzzle starts?" in after_choice.stdout)
+shown = run_menu("2\n1\n1\n[1,5,2,7,4,3,8,6,' ']\n\nQ\nN\n")
+check("saying yes prints the description and then the board",
+      "8-Puzzle Game Start" in shown.stdout and "How a move works" in shown.stdout
+      and "Initial state" in shown.stdout)
+hidden = run_menu("2\n2\n1\n[1,5,2,7,4,3,8,6,' ']\n\nQ\nN\n")
+check("saying no skips it and still plays",
+      "8-Puzzle Game Start" not in hidden.stdout and "How a move works" not in hidden.stdout
+      and "Initial state" in hidden.stdout and "Available:" in hidden.stdout)
+search_hidden = run_menu("2\n2\n3\n[1,5,2,7,4,3,8,6,' ']\n\n")
+check("the search description can be skipped the same way",
+      "Breadth-First Search" not in search_hidden.stdout
+      and "Total number of moves to reach the goal state = 8" in search_hidden.stdout)
 
 
 # 4. The game.
@@ -200,39 +217,39 @@ check("the instructions print before anything is asked for",
           "import CMSC170_Lab3_8Puzzle_BFS as m; m.show_instructions()"], cwd=REPO,
           capture_output=True, text=True).stdout)
 
-played = run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION) + "N\n")
+played = run_menu("2\n1\n1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION) + "N\n")
 last_line = played.stdout.strip().splitlines()[-1] if played.stdout.strip() else "(no output)"
 check("CLI + the game plays through to the solved board",
       "Solved in 8 moves!" in played.stdout, last_line)
 check("the CLI game refuses an unsolvable pair",
-      "parity mismatch" in run_menu("2\n1\n[1,2,3,4,5,6,8,7,' ']\n[1,2,3,4,5,6,7,8,' ']\n").stdout)
+      "parity mismatch" in run_menu("2\n1\n1\n[1,2,3,4,5,6,8,7,' ']\n[1,2,3,4,5,6,7,8,' ']\n").stdout)
 check("the CLI game ends cleanly when the input runs out",
-      "No input left" in run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\nA\n").stdout)
+      "No input left" in run_menu("2\n1\n1\n[1,5,2,7,4,3,8,6,' ']\n\nA\n").stdout)
 check("after solving, the CLI offers the optimal solution",
       "Show the optimal solution with BFS?" in played.stdout)
 check("the offer can be declined", "No answer shown." in played.stdout)
-accepted = run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION) + "Y\n")
+accepted = run_menu("2\n1\n1\n[1,5,2,7,4,3,8,6,' ']\n\n" + "".join(k + "\n" for k in SOLUTION) + "Y\n")
 check("accepting it shows BFS's answer and compares the counts",
       "You: 8 move(s). BFS: 8 move(s)" in accepted.stdout
       and "optimal number of moves" in accepted.stdout,
       " ".join(accepted.stdout.strip().splitlines()[-2:]))
-quit_run = run_menu("2\n1\n[1,5,2,7,4,3,8,6,' ']\n\nA\nA\nQ\nY\n")
+quit_run = run_menu("2\n1\n1\n[1,5,2,7,4,3,8,6,' ']\n\nA\nA\nQ\nY\n")
 check("quitting the CLI game offers to solve it from there",
       "Solve the board you are on with BFS?" in quit_run.stdout
       and "BFS needs 6 more move(s) from where you stopped." in quit_run.stdout,
       " ".join(quit_run.stdout.strip().splitlines()[-2:]))
-random_run = run_menu("2\n1\nR\n\nQ\nN\n")
+random_run = run_menu("2\n1\n1\nR\n\nQ\nN\n")
 check("'R' plays a random board that can reach the goal",
       "random board:" in random_run.stdout and "parity mismatch" not in random_run.stdout)
 check("the CLI can play a board read from a file",
-      "Initial state:" in run_menu("2\n2\nsample_8_moves.txt\nQ\nN\n").stdout
-      and "| 8 | 6 |   |" in run_menu("2\n2\nsample_8_moves.txt\nQ\nN\n").stdout)
+      "Initial state:" in run_menu("2\n1\n2\nsample_8_moves.txt\nQ\nN\n").stdout
+      and "| 8 | 6 |   |" in run_menu("2\n1\n2\nsample_8_moves.txt\nQ\nN\n").stdout)
 check("the CLI can solve a board typed in with BFS",
       "Total number of moves to reach the goal state = 8"
-      in run_menu("2\n3\n[1,5,2,7,4,3,8,6,' ']\n\n").stdout)
+      in run_menu("2\n1\n3\n[1,5,2,7,4,3,8,6,' ']\n\n").stdout)
 
 # Task 3 in the CLI: the file option, straight from the menu.
-bfs_run = run_menu("2\n4\nsample_8_moves.txt\n")
+bfs_run = run_menu("2\n1\n4\nsample_8_moves.txt\n")
 check("CLI + BFS reads the file and finds the handout's 8 moves",
       "Total number of moves to reach the goal state = 8" in bfs_run.stdout
       and "Nodes expanded: 149" in bfs_run.stdout)
@@ -240,9 +257,9 @@ check("the BFS path explains the algorithm before searching",
       "=== Breadth-First Search (BFS) ===" in bfs_run.stdout
       and bfs_run.stdout.index("Breadth-First Search (BFS)") < bfs_run.stdout.index("Searching..."))
 check("CLI + BFS reports an unsolvable file",
-      "UNSOLVABLE" in run_menu("2\n4\nunsolvable_swap.txt\n").stdout)
+      "UNSOLVABLE" in run_menu("2\n1\n4\nunsolvable_swap.txt\n").stdout)
 check("CLI + BFS refuses a bad file with a message",
-      "Could not read input" in run_menu("2\n4\ninvalid_duplicate.txt\n").stdout)
+      "Could not read input" in run_menu("2\n1\n4\ninvalid_duplicate.txt\n").stdout)
 
 
 # 5. The GUI, on top of both parts.

@@ -162,6 +162,7 @@ check("the description says how the board is written down",
       "How the board is written" in out)
 check("the description says what moving the empty space does",
       "You never move a tile directly" in out and "slides into the space" in out)
+
 check("the description says when the puzzle is finished",
       "How you win" in out and "match the goal board" in out)
 check("the instructions show the lab sheet's input format",
@@ -252,17 +253,17 @@ check("two random boards are not always the same",
 
 import builtins
 
-def play_with(answer_lines, *boards):
+def play_with(answer_lines, *boards, **options):
     """Run play() with these lines typed at its prompts.
 
     Anything in `boards` is passed to play() as (initial, goal), the way the file
-    option does it.
+    option does it, and **options go straight to play() (e.g. instructions=False).
     """
     lines = iter(answer_lines)
     original = builtins.input
     builtins.input = lambda prompt="": next(lines)
     try:
-        return game.play(*boards)
+        return game.play(*boards, **options)
     finally:
         builtins.input = original
 
@@ -272,6 +273,22 @@ check("'R' at the first prompt plays a random board",
       f"{random_run[0]}, board {random_run[1]}")
 check("the game reports the outcome, the boards and the moves played",
       random_run[1] == random_run[4] and random_run[3] == 0)
+
+# The menu offers to leave the long description out, so play() takes a flag for it.
+import contextlib
+import io
+
+spoken = io.StringIO()
+with contextlib.redirect_stdout(spoken):
+    quiet_run = play_with(["Q"], (1, 5, 2, 7, 4, 3, 8, 6, 0), game.DEFAULT_GOAL,
+                          instructions=False)
+quiet_out = spoken.getvalue()
+check("the description is left out when it is not wanted",
+      "8-Puzzle Game Start" not in quiet_out and "How a move works" not in quiet_out)
+check("the board is still printed and the game still plays",
+      "Initial state:" in quiet_out and "Moves so far: 0" in quiet_out
+      and "Available:" in quiet_out)
+check("leaving the description out changes nothing else", quiet_run[0] == "quit")
 
 solved_run = play_with(["[1,5,2,7,4,3,8,6,' ']", ""] + MOVES_TO_SOLVE.split())
 check("a solved game reports 'solved' with the number of moves",
