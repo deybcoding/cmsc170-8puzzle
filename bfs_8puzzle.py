@@ -6,19 +6,48 @@ Task 3: Breadth-First Search on the 8-Puzzle
 from collections import deque
 import sys
 
+# The move rules and the parity check live in the Task 2 game file. The search
+# imports them instead of writing them a second time, so the game and the search
+# always agree about what a legal move is.
+from Task2_Lab3 import get_possible_moves, is_valid_state, is_solvable
+
 
 # Describing BFS
 
-def describe_bfs():
-    print("""
-=== Breadth-First Search (BFS) ===
+# What BFS is, in one place: the CLI prints it and the window shows it.
+BFS_DESCRIPTION = """=== Breadth-First Search (BFS) ===
 BFS is an uninformed search. It starts at the root (initial state) and
 explores ALL nodes at depth d before any node at depth d+1.
 
-Because every move costs 1 and the queue is FIFO, the first time the
-goal is reached is via a shortest path, so BFS is complete and optimal.
-Time: O(V + E).  Space: O(V) (visited set + queue).
-""")
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second."""
+
+
+def describe_bfs():
+    """Print the description of the algorithm."""
+    print(BFS_DESCRIPTION)
+    print()
 
 # Node class
 
@@ -46,29 +75,10 @@ class Node:
 
 # Moves and state space
 
-# (row change, col change) applied to the blank
-MOVES = {"W": (-1, 0), "A": (0, -1), "X": (1, 0), "D": (0, 1)}
+# The move generator is Task 2's get_possible_moves(state), imported above. It
+# returns {action: next_state} for the blank's legal moves, so this section only
+# has to cache the states the search expands.
 STEP_COST = 1
-
-def get_possible_moves(state):
-    """
-    Return [(action, next_state), ...] for every legal move of the blank.
-    A move is valid only if the blank stays inside the 3x3 board and only
-    one tile changes place.
-    (If Member 1's get_possible_moves has a different signature, adapt
-    this one line or swap the function in.)
-    """
-    blank = state.index(0)
-    r, c = divmod(blank, 3)
-    result = []
-    for action, (dr, dc) in MOVES.items():
-        nr, nc = r + dr, c + dc
-        if 0 <= nr < 3 and 0 <= nc < 3:
-            target = nr * 3 + nc
-            new = list(state)
-            new[blank], new[target] = new[target], new[blank]
-            result.append((action, tuple(new)))
-    return result
 
 # state_space: {state: [(action, next_state, step_cost), ...]}
 # Filled while BFS runs, so it only stores states that were actually
@@ -78,14 +88,15 @@ state_space = {}
 def expand(state):
     """Return (and cache in state_space) the successors of a state."""
     if state not in state_space:
-        state_space[state] = [(a, s, STEP_COST) for a, s in get_possible_moves(state)]
+        state_space[state] = [(a, s, STEP_COST)
+                              for a, s in get_possible_moves(state).items()]
     return state_space[state]
 
 
 # File input
 
 def validate_state(state, label="state"):
-    if len(state) != 9 or sorted(state) != list(range(9)):
+    if not is_valid_state(state):
         raise ValueError(f"Invalid {label}: must contain each of 0-8 exactly once, got {list(state)}")
 
 def parse_state_file(path):
@@ -114,16 +125,9 @@ def parse_state_file(path):
 
 # Solvability check and BFS
 
-def is_solvable(initial, goal):
-    """
-    On a 3x3 board a state can reach another only if both have the same
-    inversion parity (ignoring the blank). Lets us reject impossible
-    boards instantly instead of exploring all 181,440 reachable states.
-    """
-    def inversions(s):
-        t = [x for x in s if x != 0]
-        return sum(1 for i in range(len(t)) for j in range(i + 1, len(t)) if t[i] > t[j])
-    return inversions(initial) % 2 == inversions(goal) % 2
+# is_solvable(initial, goal) is Task 2's parity check, imported above. It lets the
+# program reject an impossible board instead of exploring all 181,440 reachable
+# states before giving up.
 
 def bfs(initial_state, goal_state, verbose=True):
     """

@@ -1,0 +1,1284 @@
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+Console output used for the screenshots in the submitted PDF.
+
+Python 3.14.7, run inside the lab folder with the command shown above each block.
+Every run uses the program's own output, nothing was edited by hand. The typed answers
+show up after their prompts because these runs go through a terminal.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# the three questions: how to run it, whether to print the description, and which task
+# typed input: 2 / 1 / Q
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: Q
+Goodbye.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - the description, printed because it was asked for | CLI, Task 2 - the two boards typed in and the first moves
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached.
+
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Available: 'W' Up, 'A' Left
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 |   | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+|   | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'D' Right
+Your move: W
+
+Moves so far: 3
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+|   | 4 | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'X' Down, 'D' Right
+Your move: D
+
+Moves so far: 4
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 4 |   | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'X' Down, 'D' Right
+Your move: 
+No input left, ending the game.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - asked for no description, so the board is the first thing printed
+# typed input: 2 / 2 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / Q / N
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 2
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Available: 'W' Up, 'A' Left
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 |   | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+|   | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'D' Right
+Your move: Q
+Game ended.
+You stopped after 2 move(s). Solve the board you are on with BFS?
+(Y/N): N
+No answer shown.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - 'R' gives a random board that can reach the goal
+# typed input: 2 / 1 / 1 / R / (Enter) / A / A
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached.
+
+Initial state ('R' for a random board): R
+  random board: (2, 1, 0, 4, 3, 5, 8, 6, 7)
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 2 | 1 |   |
++---+---+---+
+| 4 | 3 | 5 |
++---+---+---+
+| 8 | 6 | 7 |
++---+---+---+
+Available: 'A' Left, 'X' Down
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 2 |   | 1 |
++---+---+---+
+| 4 | 3 | 5 |
++---+---+---+
+| 8 | 6 | 7 |
++---+---+---+
+Available: 'A' Left, 'X' Down, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+|   | 2 | 1 |
++---+---+---+
+| 4 | 3 | 5 |
++---+---+---+
+| 8 | 6 | 7 |
++---+---+---+
+Available: 'X' Down, 'D' Right
+Your move: 
+No input left, ending the game.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - solved, and then BFS is offered and compared
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / W / D / W / D / X / X / Y
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached.
+
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Available: 'W' Up, 'A' Left
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 |   | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+|   | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'D' Right
+Your move: W
+
+Moves so far: 3
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+|   | 4 | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'X' Down, 'D' Right
+Your move: D
+
+Moves so far: 4
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 4 |   | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'X' Down, 'D' Right
+Your move: W
+
+Moves so far: 5
++---+---+---+
+| 1 |   | 2 |
++---+---+---+
+| 4 | 5 | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'A' Left, 'X' Down, 'D' Right
+Your move: D
+
+Moves so far: 6
++---+---+---+
+| 1 | 2 |   |
++---+---+---+
+| 4 | 5 | 3 |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'A' Left, 'X' Down
+Your move: X
+
+Moves so far: 7
++---+---+---+
+| 1 | 2 | 3 |
++---+---+---+
+| 4 | 5 |   |
++---+---+---+
+| 7 | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'X' Down
+Your move: X
+
++---+---+---+
+| 1 | 2 | 3 |
++---+---+---+
+| 4 | 5 | 6 |
++---+---+---+
+| 7 | 8 |   |
++---+---+---+
+Solved in 8 moves!
+That was 8 move(s). Show the optimal solution with BFS?
+(Y/N): Y
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+  finished level 5: frontier now holds 39 nodes
+  finished level 6: frontier now holds 62 nodes
+
+Root Node (Level 0)
+  1 5 2
+  7 4 3
+  8 6  
+
+Level 1  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+  8   6
+
+Level 2  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+    8 6
+
+Level 3  (blank moved Up, 'W')
+  1 5 2
+    4 3
+  7 8 6
+
+Level 4  (blank moved Right, 'D')
+  1 5 2
+  4   3
+  7 8 6
+
+Level 5  (blank moved Up, 'W')
+  1   2
+  4 5 3
+  7 8 6
+
+Level 6  (blank moved Right, 'D')
+  1 2  
+  4 5 3
+  7 8 6
+
+Level 7  (blank moved Down, 'X')
+  1 2 3
+  4 5  
+  7 8 6
+
+Level 8  (blank moved Down, 'X')
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 8
+Move sequence: A A W D W D X X
+You: 8 move(s). BFS: 8 move(s), 149 states expanded.
+That is the optimal number of moves for this board.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - quitting offers to finish the board with BFS
+# typed input: 2 / 1 / 1 / [1,5,2,7,4,3,8,6,' '] / (Enter) / A / A / Q / Y
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached.
+
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+
+Moves so far: 0
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Available: 'W' Up, 'A' Left
+Your move: A
+
+Moves so far: 1
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 |   | 6 |
++---+---+---+
+Available: 'W' Up, 'A' Left, 'D' Right
+Your move: A
+
+Moves so far: 2
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+|   | 8 | 6 |
++---+---+---+
+Available: 'W' Up, 'D' Right
+Your move: Q
+Game ended.
+You stopped after 2 move(s). Solve the board you are on with BFS?
+(Y/N): Y
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+
+Root Node (Level 0)
+  1 5 2
+  7 4 3
+    8 6
+
+Level 1  (blank moved Up, 'W')
+  1 5 2
+    4 3
+  7 8 6
+
+Level 2  (blank moved Right, 'D')
+  1 5 2
+  4   3
+  7 8 6
+
+Level 3  (blank moved Up, 'W')
+  1   2
+  4 5 3
+  7 8 6
+
+Level 4  (blank moved Right, 'D')
+  1 2  
+  4 5 3
+  7 8 6
+
+Level 5  (blank moved Down, 'X')
+  1 2 3
+  4 5  
+  7 8 6
+
+Level 6  (blank moved Down, 'X')
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 6
+Move sequence: W D W D X X
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+  finished level 5: frontier now holds 39 nodes
+  finished level 6: frontier now holds 62 nodes
+BFS needs 6 more move(s) from where you stopped.
+From the board you started with, BFS needs 8 move(s) in total and you had played 2.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 2 - a board that cannot reach the goal is refused at the start
+# typed input: 2 / 1 / 1 / [1,2,3,4,5,6,8,7,' '] / [1,2,3,4,5,6,7,8,' ']
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 1
+8-Puzzle Game Start
+The 8-puzzle problem is a 3x3 board with 8 tiles
+numbered from 1 to 8 and one empty space.
+
+The objective is to begin with an arbitrary
+configuration of tiles, and move them to match
+the final configuration.
+
+How the board is written
+   The nine cells are read row by row, left to right, and the empty space is a blank.
+   The board below is the one written as [1, 2, 3, 4, ' ', 8, 5, 6, 7] in the puzzle's
+   input format:
+
+        1   2   3
+        4       8
+        5   6   7
+
+How a move works
+   You never move a tile directly. You move the EMPTY SPACE, and the tile on that side
+   of it slides into the space, so those two cells swap. That is why the keys below are
+   named after the direction the space moves: 'W' moves the space up, which slides the
+   tile above it down.
+
+   Only a tile next to the space can move. Nothing jumps and nothing moves diagonally,
+   so a space in a corner has two possible moves, one on an edge has three, and one in
+   the middle has four. The game prints the moves available after every move.
+
+How you win
+   The puzzle is finished when every tile and the empty space match the goal board. The
+   counter goes up by one for every move you make, and the game says how many moves it
+   took when you get there.
+
+Rules
+   1. Input the initial state and goal state of the puzzle using this format:
+        [1, 2, 3, 4, ' ', 8, 5, 6, 7]
+      The empty space may also be typed as 0 or '_'.
+   2. Use the following keys to move the empty block:
+        'W' Move Up       'A' Move Left
+        'X' Move Down     'D' Move Right
+      ('R' at the first prompt gives a random board that can reach the default goal)
+      ('Q' quits, and you can then watch BFS solve the board you are on)
+   3. Not every board can reach every other board: half of the arrangements cannot be
+      reached from a given start, so the game checks the two boards you give it and
+      tells you straight away when the goal cannot be reached.
+
+Initial state ('R' for a random board): [1,2,3,4,5,6,8,7,' ']
+Goal state (press Enter for 1-8 then blank): [1,2,3,4,5,6,7,8,' ']
+
+This initial state can never reach that goal (parity mismatch).
+Please restart with a different pair.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 3 - the handout's sample board: the two boards and the search starting | CLI, Task 3 - the same run: the last levels and the total number of moves
+# typed input: 2 / 1 / 4 / sample_8_moves.txt
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 4
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second.
+
+Path to input file (e.g. sample_8_moves.txt): sample_8_moves.txt
+Initial state:
+  1 5 2
+  7 4 3
+  8 6  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+  finished level 5: frontier now holds 39 nodes
+  finished level 6: frontier now holds 62 nodes
+
+Root Node (Level 0)
+  1 5 2
+  7 4 3
+  8 6  
+
+Level 1  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+  8   6
+
+Level 2  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+    8 6
+
+Level 3  (blank moved Up, 'W')
+  1 5 2
+    4 3
+  7 8 6
+
+Level 4  (blank moved Right, 'D')
+  1 5 2
+  4   3
+  7 8 6
+
+Level 5  (blank moved Up, 'W')
+  1   2
+  4 5 3
+  7 8 6
+
+Level 6  (blank moved Right, 'D')
+  1 2  
+  4 5 3
+  7 8 6
+
+Level 7  (blank moved Down, 'X')
+  1 2 3
+  4 5  
+  7 8 6
+
+Level 8  (blank moved Down, 'X')
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 8
+Move sequence: A A W D W D X X
+Nodes expanded: 149 | States stored in state_space: 149
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 3 - the same search on a board typed in instead of a file
+# typed input: 2 / 1 / 3 / [1,5,2,7,4,3,8,6,' '] / (Enter)
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 3
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second.
+
+Initial state ('R' for a random board): [1,5,2,7,4,3,8,6,' ']
+Goal state (press Enter for 1-8 then blank): 
+Initial state:
++---+---+---+
+| 1 | 5 | 2 |
++---+---+---+
+| 7 | 4 | 3 |
++---+---+---+
+| 8 | 6 |   |
++---+---+---+
+Goal state:
++---+---+---+
+| 1 | 2 | 3 |
++---+---+---+
+| 4 | 5 | 6 |
++---+---+---+
+| 7 | 8 |   |
++---+---+---+
+
+Searching...
+  finished level 0: frontier now holds 2 nodes
+  finished level 1: frontier now holds 4 nodes
+  finished level 2: frontier now holds 8 nodes
+  finished level 3: frontier now holds 16 nodes
+  finished level 4: frontier now holds 20 nodes
+  finished level 5: frontier now holds 39 nodes
+  finished level 6: frontier now holds 62 nodes
+
+Root Node (Level 0)
+  1 5 2
+  7 4 3
+  8 6  
+
+Level 1  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+  8   6
+
+Level 2  (blank moved Left, 'A')
+  1 5 2
+  7 4 3
+    8 6
+
+Level 3  (blank moved Up, 'W')
+  1 5 2
+    4 3
+  7 8 6
+
+Level 4  (blank moved Right, 'D')
+  1 5 2
+  4   3
+  7 8 6
+
+Level 5  (blank moved Up, 'W')
+  1   2
+  4 5 3
+  7 8 6
+
+Level 6  (blank moved Right, 'D')
+  1 2  
+  4 5 3
+  7 8 6
+
+Level 7  (blank moved Down, 'X')
+  1 2 3
+  4 5  
+  7 8 6
+
+Level 8  (blank moved Down, 'X')
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 8
+Move sequence: A A W D W D X X
+Nodes expanded: 149 | States stored in state_space: 149
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 3 - a board with no solution, refused before the search runs
+# typed input: 2 / 1 / 4 / unsolvable_swap.txt
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 4
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second.
+
+Path to input file (e.g. sample_8_moves.txt): unsolvable_swap.txt
+Initial state:
+  1 2 3
+  4 5 6
+  8 7  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+This puzzle is UNSOLVABLE: the goal is not reachable from the initial state.
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 3 - a board that already is the goal board
+# typed input: 2 / 1 / 4 / already_solved.txt
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 4
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second.
+
+Path to input file (e.g. sample_8_moves.txt): already_solved.txt
+Initial state:
+  1 2 3
+  4 5 6
+  7 8  
+Goal state:
+  1 2 3
+  4 5 6
+  7 8  
+
+Searching...
+
+Root Node (Level 0)
+  1 2 3
+  4 5 6
+  7 8  
+
+Total number of moves to reach the goal state = 0
+Move sequence: (none)
+Nodes expanded: 0 | States stored in state_space: 0
+
+========================================================================
+$ python CMSC170_Lab3_8Puzzle_BFS.py
+# CLI, Task 3 - an input file with a repeated tile is refused
+# typed input: 2 / 1 / 4 / invalid_duplicate.txt
+========================================================================
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+8-puzzle and breadth-first search
+
+How do you want to run the program?
+  1 - with a GUI (a window)
+  2 - CLI only, in this terminal
+  Q - quit
+
+Choice: 2
+Print the description before the puzzle starts?
+  1 - yes, print it (how to play, or how the search works)
+  2 - no, skip it and go straight to the puzzle
+  Q - quit
+
+Choice: 1
+What do you want to do?
+  1 - play the 8-puzzle game, typing the boards (Task 2)
+  2 - play the game with the boards from a file
+  3 - solve a board you type with BFS (Task 3)
+  4 - solve a board from a file with BFS (Task 3)
+  Q - quit
+
+Choice: 4
+=== Breadth-First Search (BFS) ===
+BFS is an uninformed search. It starts at the root (initial state) and
+explores ALL nodes at depth d before any node at depth d+1.
+
+How it runs
+   The states waiting to be expanded are kept in a queue, and a state is always taken
+   from the FRONT of the queue while its children go to the BACK. That order is what
+   makes the search finish a whole level before starting the next one. Every state that
+   has been discovered is remembered in a visited set, so the same board is never
+   expanded twice even though many different move sequences can produce it.
+
+Why the first answer is the shortest
+   Every move in the 8-puzzle costs the same, one, so the level a state sits on is the
+   number of moves that led to it. The first time the search reaches the goal, nothing
+   shorter can exist, which is why the goal's level is printed as the answer.
+
+What it keeps
+   Each node in the search tree is a Node: the board, a pointer to the parent node, the
+   action that produced it, its depth and its path cost. The parent pointers are what
+   rebuild the route: when the goal is reached, following parent by parent back to the
+   root gives the sequence of moves that is printed level by level.
+
+Cost
+   Time: O(V + E) over the reachable states and the moves between them.  Space: O(V),
+   because the visited set and the queue hold states. On a 3x3 board 181,440 of the
+   362,880 arrangements can be reached from one start, and the deepest board needs 31
+   moves, so the whole space can still be walked in about half a second.
+
+Path to input file (e.g. sample_8_moves.txt): invalid_duplicate.txt
+Could not read input: Invalid initial state: must contain each of 0-8 exactly once, got [1, 2, 3, 4, 5, 6, 7, 8, 8]

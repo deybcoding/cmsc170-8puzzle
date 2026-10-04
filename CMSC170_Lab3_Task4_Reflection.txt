@@ -1,0 +1,337 @@
+DS 170 / CMSC 170 - Laboratory Exercise No. 3
+Task 4 - Reflection and Discussion
+Written by: Jomuad, Precious Mae E. (2023-00554), section CMSC 170
+
+This is the group's answer to the four Task 4 questions. My part in the group was
+testing and integration, so the answers refer to the functions we actually wrote in
+bfs_8puzzle.py (Task 3) and to the game functions in the Task 2 file, and the numbers
+quoted below were measured by running the program on this machine (Python 3.14.7).
+The last section lists the checks that were run and their results.
+
+===============================================================================
+
+QUESTION 1. Define, in your own words, the following in the context of AI: state,
+state space, search tree, search node, goal, and action.
+
+STATE
+A state is a complete description of the problem at one moment in time. Complete
+means that two situations with the same state cannot be told apart by the solver.
+In the 8-puzzle a state is the arrangement of the eight tiles and the blank, and we
+store it as a tuple of nine numbers with 0 for the blank, for example
+(1, 5, 2, 7, 4, 3, 8, 6, 0). Nothing else about the puzzle matters, so that tuple is
+the whole state. We keep states as tuples because a tuple cannot be changed after it
+is created, so a state can never be edited by accident, and because it is hashable and
+can be used as a key in a set or a dictionary.
+
+STATE SPACE
+The state space is the set of all states reachable from the starting state by
+applying the legal actions, together with the connections between them. For the
+8-puzzle there are 9! = 362,880 ways to arrange nine cells, but only half of them,
+181,440, can be reached from any one starting board, because every move changes the
+parity of the permutation of the tiles and no sequence of moves can change it back.
+We counted the reachable states directly by walking them (the full walk returns
+181,440), and this matters in practice: it is the largest amount of work the search
+could ever be asked to do. In Task 3 this set is what the state_space variable
+stores. We also store the step cost of each connection (1 per move), which is the
+detail that lets the same code be reused for A* later.
+
+SEARCH TREE
+The search tree is the tree that the search builds while it is running, and it is a
+different object from the state space. The root is the initial state, and below it
+each node is a state reached by one more action along that particular path. The same
+state can appear in different branches of the tree, because different orders of moves
+can produce the same board (a transposition). That is why the tree is bigger than
+the state space, and why we keep a visited set: the first time a state is discovered
+is the shortest way to reach it, so a later branch that would produce it again is
+dropped instead of being queued. On the sample board the search expanded 149 states,
+and the visited set is what keeps that number from growing with every repeat of a
+board that was already seen.
+
+SEARCH NODE
+A search node is one entry in the search tree. It is a record that packages the state
+with the bookkeeping the search needs: our Node class holds the state itself, a
+pointer to the parent node, the action that produced this state, the depth (how many
+moves from the root) and the path cost g(n). The parent pointer is the part that makes
+the answer recoverable. When BFS reaches the goal, nothing in the algorithm remembers
+the route that led there, so Node.path() walks parent by parent back to the root and
+reverses the list to get the sequence from the start to the goal.
+
+GOAL
+The goal is the situation the problem asks the solver to reach, expressed as a test
+that a state either passes or fails. In the 8-puzzle the goal is another board
+arrangement, for example the goal state (1, 2, 3, 4, 5, 6, 7, 8, 0), so the goal test
+is simply state == goal_state inside bfs(). Because the goal is itself a state, the
+search can check it at every step and stop on its own. The goal
+is a choice: the handout shows three different, equally valid goal configurations for
+the same operators, and our program accepts any of them as the second board in the
+input file. One detail we found while testing: those three goals are not all reachable
+from each other. Goal State B (1,2,3 / 8,_,4 / 7,6,5) has 7 inversions against Goal
+State A's 0, so it sits in the other half of the state space, and the program reports
+that the goal is not reachable when the two are paired.
+
+ACTION
+An action is one legal move the solver can take in a state. In the 8-puzzle an action
+is sliding one tile into the blank space, and it is legal only when that tile is
+orthogonally next to the blank: up, down, left or right, and never diagonally and
+never a jump. We encode the four actions as characters W, A, X and D in the MOVES
+dictionary, each carrying the change in row and column that the blank makes, and
+get_possible_moves() turns them into the successor states. Applying an action always
+produces exactly one new state, and that state differs from the old one in exactly two
+cells: the blank and the tile that moved. Our checks confirm that every successor the
+generator produces satisfies this, including when the blank is on an edge or in a
+corner. The edges matter because the number of legal actions depends on where the
+blank is: a blank in the centre has four actions, on an edge it has three, in a corner
+only two.
+
+Reference for these definitions: Russell, S. and Norvig, P., Artificial Intelligence:
+A Modern Approach, 4th ed., Pearson, 2021, Chapter 3 (Solving Problems by Searching),
+pp. 63-109, which defines the state, the state space, the search tree, nodes, actions
+and goals in the same terms used in the DS 170 / CMSC 170 lecture on state space
+search.
+
+===============================================================================
+
+QUESTION 2. Explain the steps in problem-solving that you carried out in this exercise.
+
+We carried out the four steps of problem solving in AI, and then checked the result.
+Each step produced something concrete in the code.
+
+Step 1 - Define the problem.
+For the 8-puzzle this meant fixing the three things the state space needs: the initial
+state, the goal test, and the actions. The initial and goal states became the two
+variables in the input (either typed in for Task 2 or read from the file for Task 3),
+the goal test became the comparison inside bfs(), and the actions became the MOVES
+dictionary with its four directions. The move generator and the move validator from
+Task 2 are the same two ideas used by the search, so doing this step badly in Task 2
+would have made Task 3 wrong as well.
+
+Step 2 - Analyse the problem.
+Analysis is where the rules are turned into conditions the program can check. Three
+things came out of it. First, the constraint on a move: the blank must stay inside the
+3x3 board after the move, which the generator enforces by checking the new row and
+column before it builds the successor. Second, the validity test for a board: the
+board has to contain each of the numbers 0 to 8 exactly once, which validate_state()
+checks. Third, and this was the useful part, the reachability question: half of the
+362,880 boards cannot reach a given goal at all, so searching them is wasted work.
+Counting inversions answers that question in one pass, and is_solvable() uses it to
+refuse an impossible input before the search starts.
+
+Step 3 - Represent the problem.
+The representation is the choice of how the problem is stored in memory. We kept the
+board as a tuple of nine integers with 0 for the blank, because it is the smallest
+form that still contains the whole state, and because it is hashable, which is what
+allows the visited set and the state_space dictionary to be plain Python structures.
+For the search we added two representations on top of the state: the Node class for
+the tree, and the state_space dictionary that caches the successors of every state
+that was expanded, together with their step cost.
+
+Step 4 - Choose and apply the technique.
+We chose breadth-first search, and the reason is that every move costs the same, so
+BFS's level-by-level expansion guarantees that the first solution it finds is a
+shortest one. The measurements support the choice at the scale of this problem: the
+handout's sample board is solved in 8 moves after expanding 149 states, the deepest
+board on a 3x3 grid (31 moves) is solved after expanding 181,349 states out of the
+181,440 reachable ones in about half a second, and an impossible board is rejected
+without searching at all. That last board is the case where a blind search would
+otherwise have done the full 181,440 states and then reported nothing.
+
+Step 5 - Verify the result.
+The last step we added ourselves, and it is the step I was responsible for. A search
+that prints an answer is not yet proven correct, so we checked the output instead of
+trusting it: the move sequence was replayed on the initial board to confirm that it
+really ends on the goal, a second queue search that tests the goal at a different
+moment was written to confirm the same path length, and a depth-limited search was run
+to confirm that no solution exists one move shorter. The last section of this document
+lists all 56 checks and their results.
+
+===============================================================================
+
+QUESTION 3. Discuss the challenges you encountered while implementing the game or the
+search.
+
+Challenge 1: The board on the handout's sample-output slide cannot be solved.
+The sample board printed on the slide for Task 3 is 1,2,3 / blank,8,6 / 4,7,5, and the
+slide reports "Total number of moves to reach the goal state = 8". When we fed that
+board to the program it reported the puzzle as unsolvable. The board has 7 inversions
+and the goal has 0, so the two are in different halves of the state space and no
+sequence of moves can join them. We checked this twice, once with the parity function
+and once by letting BFS walk the whole reachable space and come back with nothing. The
+slide's count of 8 moves is the number we wanted to reproduce, so we also kept a board
+that is exactly 8 moves away from the goal (1,5,2 / 7,4,3 / 8,6,0) in the folder, and
+it produces the printed total of 8. Both files are in the folder, so the output for an
+impossible board and the output that matches the slide are both shown in the report.
+
+Challenge 2: Telling "the search finished" apart from "the board cannot be solved".
+Without the parity check, a board with no solution costs the full 181,440 states and
+then prints nothing useful at the end of it. is_solvable() at the door fixes that: an
+impossible board is refused in under a millisecond, and the search only runs on boards
+that can actually reach the goal.
+
+Challenge 3: The count of expanded states is not the size of the state space.
+This one caught me while I was writing the checks. I expected the 31-move run to
+report 181,440 expanded states, since that is the number of reachable boards, but it
+reported 181,349. The reason is that bfs() tests the goal when a successor is
+generated and stops immediately, so it never expands the part of the last level that
+was still waiting in the queue. The count is right; my expectation was wrong. I kept
+both numbers in the tests, one produced by a full walk of the space and one produced
+by the search, and the report quotes them separately so the two are not confused.
+
+Challenge 4: Proving the path is the shortest, not just that a path exists.
+The program prints the total number of moves, and a wrong total would still look like
+a working program. Checking the shortest-path claim needed a second opinion, so the
+check battery contains two: an independent queue search that tests the goal when the
+node is taken out of the queue instead of when it is created, and a depth-limited
+search run with a limit of one move less than the reported answer. Both agree with the
+program on the sample board (8 moves) and on the deepest board (31 moves).
+
+Challenge 5: Keeping the board readable in the terminal.
+The 3x3 board has to be printed at every level of the solution, and the blank has to
+show up as a gap instead of a printed 0, which is easy to misread as a tile number. The
+board printer prints every cell in one fixed column, with a space for the blank, so the
+digits stay lined up and the hole is visible. Small thing, but the screenshots in the
+report would be hard to read without it.
+
+Challenge 6: Testing the game without changing it.
+My tests had to check whether a move is legal without re-implementing the rules, since a
+test that repeats the rule can agree with a wrong program. The way out was to test the
+rule the handout actually states, that one move swaps the blank with one neighbouring
+tile and nothing else, by comparing the before and after boards cell by cell, and to
+replay the printed move sequence through the program's own move generator. That checks
+the search's answer and the generator together, using the program itself as the source
+of legal moves instead of a copy of the rules.
+
+===============================================================================
+
+QUESTION 4. For Tasks 2 and 3, explain the design decisions you made.
+
+TASK 2 - the game
+
+1. A tuple of nine numbers for the board, with 0 for the blank. The player sees the
+handout's format [1, 2, 3, 4, ' ', 8, 5, 6, 7], so a blank typed as a space is stored
+internally as 0. Keeping one internal shape for the board means the game and the search
+never have to convert anything before they compare two states.
+
+2. Two separate functions, one that generates and one that validates.
+get_possible_moves() produces the moves available from a state by trying the four
+directions W, A, X and D and keeping the ones that stay on the board, and
+validate_move() decides whether a particular move the player gave is one of them. The
+handout asks for both, and the validator reuses the generator's list of legal moves
+instead of checking the rules a second time, so the two cannot disagree.
+
+3. Input the board once, then play by letters. The instructions and the rules are
+printed before the program asks for anything, as the handout requires. The board is
+entered as one list of nine values, and after that the player only types W, A, X or D,
+which is much less to type than a new board after every move.
+
+4. The blank moves, not the tile. The four actions are written as the change in the
+blank's own row and column, so "up" always means the blank moves up and the tile above
+it comes down. This is how the handout's key legend reads, and it removes the classic
+mistake of the player thinking in terms of moving tiles while the program moves the
+hole.
+
+TASK 3 - the search
+
+5. A Node class with a parent pointer and a depth, not just a state. The parent
+pointer is what makes the solution recoverable, and the depth is the number of moves,
+which is also the level the goal was found at. Because every move costs 1, the depth
+and the path cost are the same number here, but both are stored so that the cost can
+be weighted later without changing the class.
+
+6. state_space as a dictionary from a state to its successors and their step costs.
+The handout asks for a variable that stores the connections between states and, where
+relevant, the cost of moving between them. Caching the successors of every expanded
+state means each board is expanded once, and keeping the cost with the connection is
+the part that makes the same structure usable by A* later, where the cheapest
+connection between two states would matter.
+
+7. A goal test on generation, with a visited set. BFS stays optimal if the goal is
+tested when a successor is created rather than when it is popped, because the successor
+is created on the level where the goal first appears. Doing it this way avoids a whole
+level of queue work, and the visited set still prevents any state from being discovered
+twice.
+
+8. Inversion parity as a gate before the search. is_solvable() compares the number of
+inversions of the two boards and only lets the search run when they match in parity.
+This replaces a full 181,440-state search that ends in nothing with a single pass over
+nine numbers, and it is what turns "the program hangs and prints nothing" into a clear
+statement that the goal is not reachable from the initial state.
+
+9. The blank is read as 0 at the moment the file is parsed. The handout's note is
+right that "blank" is not a number, so the parser converts each value to an integer as
+it reads it and every board inside the program uses 0 for the hole. There is one
+internal convention for the blank and the conversion happens once, at the boundary
+where the file enters the program.
+
+10. Printing the search as it happens. The program prints the board at every level of
+the solution path from the root to the goal, labelled with the level and the move that
+produced it, and ends with the total number of moves. The level of the goal node is
+the answer, so the last printed level and the printed total are always the same
+number, which is easy for a reader to verify on the screenshot.
+
+===============================================================================
+
+Checks run on the final program (two test harnesses)
+
+Two check batteries were run on the merged code. Final result: 119 checks, 119 passed,
+0 failed. test_edge_cases.py covers the search (Task 3), test_task2_game.py covers the
+game (Task 2) and the shared rules.
+
+test_edge_cases.py - the search (56 checks)
+
+  1. Boundary moves of the blank (12 checks) - blank at each of the nine cells of the
+     board, with 2 moves in each corner, 3 on each edge and 4 in the centre; every
+     successor differs from its parent in exactly two cells, the blank and one tile
+     next to it; no move ever leaves the 3x3 board.
+  2. Sample board from the handout (8 checks) - 8 moves, path ends on the goal state,
+     every move in the sequence is legal at the point where it is played, 149 states
+     expanded.
+  3. Already solved start (8 checks) - 0 moves, 0 states expanded, the path is the
+     single root node, and a second goal in the same parity half is searched normally
+     (14 moves). Goal State B is confirmed unreachable from Goal State A.
+  4. Unsolvable boards (7 checks) - both unsolvable files rejected, solvable boards
+     still accepted, solve() returns no path for an impossible board in under half a
+     second.
+  5. Invalid input files (11 checks) - a repeated tile and a row with two values raise
+     a clear error, a missing file raises OSError, validate_state() rejects a
+     duplicated tile, a board of eight cells, a tile numbered 9 and two blanks, and
+     the valid sample file still parses to the two boards expected.
+  6. Shortest path check (5 checks) - on the sample board and on the deepest board, an
+     independent queue search that tests the goal on pop returns the same number of
+     moves, and on the sample board a depth-limited search confirms that no solution
+     exists in 7 moves.
+  7. Deepest board, 31 moves (5 checks) - solved in 31 moves, 181,349 states expanded
+     in 0.51 s, a full walk of the reachable space returns 181,440 states, and the
+     search stops before expanding all of them.
+
+test_task2_game.py - the game and the shared rules (63 checks)
+
+  1. Boundary moves in the game (14 checks) - the same nine cells, with the same counts
+     as the search; every move swaps the blank with one neighbouring tile; the board a
+     move came from is still unchanged afterwards.
+  2. validate_move (9 checks) - the legal keys are accepted, a key that would leave the
+     board is refused, and an unknown, empty, doubled, lowercase or missing key is
+     refused.
+  3. Typed input is converted to the state form (13 checks) - the lab sheet's format
+     converts to the internal state, a blank typed as 0 or '_' converts too, and a
+     repeated tile, eight or ten cells, a quoted tile, two blanks or a tile numbered 9
+     are all refused before the game starts.
+  4. Solvability (4 checks) - the lab sheet's own input-format example board cannot
+     reach the goal, the 8-move board can, and one transposed tile is enough to make a
+     board unsolvable.
+  5. Playing the game end to end (16 checks) - the game is run as a separate process
+     and the prompts are fed in line by line: the instructions print before anything is
+     asked, the eight moves solve the 8-move board and the last board printed is the
+     goal board, an invalid key is refused and the game carries on, Q ends the game,
+     an unsolvable pair is refused before play starts, an already solved start reports
+     0 moves, bad input is re-prompted, and the game ends cleanly when the input runs
+     out or Q is typed at a state prompt.
+  6. The game and the search agree (7 checks) - the search calls the game's own move
+     generator rather than a copy, both produce the same move set and the same successor
+     boards, a board typed into the game is solved by the search in 8 moves, and every
+     move in the search's answer passes the game's validator.
+
+Both files are test harnesses and are not part of the submitted program; they are kept
+in the folder so every result above can be re-run.
+
+Submitted as part of Laboratory Exercise No. 3. The program files carry the group's
+names and student numbers as the handout requires.
